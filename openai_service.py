@@ -39,7 +39,7 @@ class OpenAIService:
                     # Make sure we're using a valid ISO-639-1 code
                     params["language"] = language
                 
-                print(f"Calling OpenAI with params: {params}", file=sys.stderr)
+                print(f"🎤 Calling OpenAI Whisper with params: {params}", file=sys.stderr)
                 
                 transcription = await loop.run_in_executor(
                     None,
@@ -47,16 +47,17 @@ class OpenAIService:
                 )
                 
                 transcript = transcription.text
+                print(f"📝 Initial transcription: '{transcript[:50]}...'", file=sys.stderr)
                 
                 # Apply post-processing if enabled
                 if self.use_post_processing and transcript:
-                    print("Applying GPT-4 post-processing...", file=sys.stderr)
+                    print("⏳ Applying GPT-4 post-processing to improve quality...", file=sys.stderr)
                     processed_transcript = await self.post_process_with_gpt4(transcript, language)
                     return processed_transcript
                 
                 return transcript
         except Exception as e:
-            print(f"OpenAI transcription error: {str(e)}", file=sys.stderr)
+            print(f"❌ OpenAI transcription error: {str(e)}", file=sys.stderr)
             raise Exception(f"OpenAI transcription error: {str(e)}")
     
     async def post_process_with_gpt4(self, transcript, language=None):
@@ -67,7 +68,8 @@ class OpenAIService:
             # Create a system prompt based on language
             system_prompt = self._get_system_prompt_for_language(language)
             
-            print(f"Using system prompt: {system_prompt[:50]}...", file=sys.stderr)
+            print(f"🧠 Starting GPT-4 post-processing for transcript...", file=sys.stderr)
+            print(f"Original transcript: '{transcript[:50]}...'", file=sys.stderr)
             
             response = await loop.run_in_executor(
                 None,
@@ -88,10 +90,12 @@ class OpenAIService:
             )
             
             processed_text = response.choices[0].message.content
+            print(f"✅ GPT-4 post-processing complete", file=sys.stderr)
+            print(f"Improved transcript: '{processed_text[:50]}...'", file=sys.stderr)
             return processed_text
         except Exception as e:
-            print(f"Post-processing error: {str(e)}", file=sys.stderr)
-            print("Returning original transcript instead", file=sys.stderr)
+            print(f"❌ Post-processing error: {str(e)}", file=sys.stderr)
+            print("⚠️ Returning original transcript instead", file=sys.stderr)
             return transcript
     
     def _get_system_prompt_for_language(self, language):
