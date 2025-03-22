@@ -57,17 +57,22 @@ class SettingsDialog:
     def __init__(self, parent):
         self.dialog = ctk.CTkToplevel(parent)
         self.dialog.title("Settings")
-        self.dialog.geometry("400x500")
+        self.dialog.geometry("450x600")
         self.dialog.transient(parent)
-        self.dialog.resizable(False, False)
+        self.dialog.resizable(True, True)
+        self.dialog.minsize(400, 550)
+        
+        # Erstelle Container-Frame mit Scrollbar
+        self.container = ctk.CTkScrollableFrame(self.dialog)
+        self.container.pack(fill="both", expand=True, padx=10, pady=10)
         
         # Load current settings
         with open('settings.json', 'r') as f:
             self.settings = json.load(f)
         
         # Service selection frame
-        self.service_frame = ctk.CTkFrame(self.dialog)
-        self.service_frame.pack(fill="x", padx=20, pady=(20, 10))
+        self.service_frame = ctk.CTkFrame(self.container)
+        self.service_frame.pack(fill="x", padx=10, pady=(10, 5))
         
         self.service_label = ctk.CTkLabel(
             self.service_frame, 
@@ -98,8 +103,8 @@ class SettingsDialog:
         self.openai_radio.pack(anchor="w", pady=5, padx=10)
         
         # Language selection frame
-        self.language_frame = ctk.CTkFrame(self.dialog)
-        self.language_frame.pack(fill="x", padx=20, pady=10)
+        self.language_frame = ctk.CTkFrame(self.container)
+        self.language_frame.pack(fill="x", padx=10, pady=5)
         
         self.language_label = ctk.CTkLabel(
             self.language_frame, 
@@ -114,22 +119,65 @@ class SettingsDialog:
         # Create the dropdown for language selection
         self.language_var = ctk.StringVar(value=self.settings.get('language', 'auto'))
         
+        # Get language display names
+        language_display_names = list(self.languages.values())
+        
+        # Get current language name
+        current_lang_code = self.language_var.get()
+        current_lang_name = self.languages.get(current_lang_code, current_lang_code)
+        
         self.language_menu = ctk.CTkOptionMenu(
             self.language_frame,
-            values=list(self.languages.keys()),
-            command=self.on_language_change,
-            variable=self.language_var,
-            dynamic_resizing=False,
+            values=language_display_names,
+            variable=None,
             width=200
         )
         self.language_menu.pack(pady=5)
+        self.language_menu.set(current_lang_name)
         
-        # Set the initial display value to show the language name, not code
-        self.update_language_display()
+        # Handle language selection
+        def on_language_change(selection):
+            # Convert display name to code
+            for code, name in self.languages.items():
+                if name == selection:
+                    self.language_var.set(code)
+                    return
+            self.language_var.set(selection)
+        
+        self.language_menu.configure(command=on_language_change)
+        
+        # OpenAI Post-Processing Frame
+        self.post_processing_frame = ctk.CTkFrame(self.container)
+        self.post_processing_frame.pack(fill="x", padx=10, pady=5)
+        
+        self.post_processing_label = ctk.CTkLabel(
+            self.post_processing_frame,
+            text="OpenAI GPT-4 Post-Processing:",
+            font=ctk.CTkFont(size=14)
+        )
+        self.post_processing_label.pack(anchor="w", pady=5)
+        
+        self.post_processing_info = ctk.CTkLabel(
+            self.post_processing_frame,
+            text="Improve transcription quality using GPT-4.\nMay add latency but increases accuracy.",
+            font=ctk.CTkFont(size=12),
+            wraplength=350,
+            justify="left"
+        )
+        self.post_processing_info.pack(anchor="w", pady=5)
+        
+        self.post_processing_var = ctk.BooleanVar(value=self.settings.get('post_processing', False))
+        
+        self.post_processing_checkbox = ctk.CTkCheckBox(
+            self.post_processing_frame,
+            text="Enable GPT-4 Post-Processing",
+            variable=self.post_processing_var
+        )
+        self.post_processing_checkbox.pack(anchor="w", pady=5, padx=10)
         
         # Deepgram API Key input
-        self.deepgram_frame = ctk.CTkFrame(self.dialog)
-        self.deepgram_frame.pack(fill="x", padx=20, pady=10)
+        self.deepgram_frame = ctk.CTkFrame(self.container)
+        self.deepgram_frame.pack(fill="x", padx=10, pady=5)
         
         self.deepgram_label = ctk.CTkLabel(
             self.deepgram_frame, 
@@ -147,8 +195,8 @@ class SettingsDialog:
         self.deepgram_entry.insert(0, self.settings.get('api_key', ''))
         
         # OpenAI API Key input
-        self.openai_frame = ctk.CTkFrame(self.dialog)
-        self.openai_frame.pack(fill="x", padx=20, pady=10)
+        self.openai_frame = ctk.CTkFrame(self.container)
+        self.openai_frame.pack(fill="x", padx=10, pady=5)
         
         self.openai_label = ctk.CTkLabel(
             self.openai_frame, 
@@ -167,7 +215,7 @@ class SettingsDialog:
         
         # Status label for test results
         self.status_label = ctk.CTkLabel(
-            self.dialog,
+            self.container,
             text="",
             font=ctk.CTkFont(size=12),
             wraplength=350
@@ -176,21 +224,24 @@ class SettingsDialog:
         
         # Test button
         self.test_btn = ctk.CTkButton(
-            self.dialog,
+            self.container,
             text="Test Service",
             command=self.test_service,
             width=100
         )
         self.test_btn.pack(pady=5)
         
-        # Save button
+        # Save button - in einem Frame am unteren Rand
+        self.button_frame = ctk.CTkFrame(self.dialog, fg_color="transparent")
+        self.button_frame.pack(fill="x", side="bottom", pady=10)
+        
         self.save_btn = ctk.CTkButton(
-            self.dialog,
+            self.button_frame,
             text="Save",
             command=self.save_settings,
             width=100
         )
-        self.save_btn.pack(pady=10)
+        self.save_btn.pack(pady=5)
         
         # Set initial visibility based on selected service
         self.update_api_visibility()
@@ -201,8 +252,10 @@ class SettingsDialog:
             service_type = self.service_var.get()
             if service_type == "deepgram":
                 api_key = self.deepgram_entry.get()
+                post_processing = False
             else:
                 api_key = self.openai_entry.get()
+                post_processing = self.post_processing_var.get()
                 
             language = self.language_var.get()
             
@@ -212,14 +265,15 @@ class SettingsDialog:
                 return
                 
             # Create service
-            service = create_service(service_type, api_key)
+            service = create_service(service_type, api_key, post_processing)
             
             self.status_label.configure(text=f"Testing {service_type.capitalize()}...", text_color="black")
             self.dialog.update()
             
             # Just do a quick test to see if service initializes properly
+            post_process_text = " with GPT-4 post-processing" if post_processing and service_type == "openai" else ""
             self.status_label.configure(
-                text=f"{service_type.capitalize()} service initialized successfully with language '{language}'",
+                text=f"{service_type.capitalize()} service initialized successfully{post_process_text}",
                 text_color="green"
             )
             
@@ -229,27 +283,38 @@ class SettingsDialog:
     def update_language_display(self):
         # Update the displayed value in the dropdown to show language name instead of code
         current_lang_code = self.language_var.get()
-        # Custom handling for the OptionMenu to display the language name
-        self.language_menu.set(self.languages.get(current_lang_code, current_lang_code))
+        # Get the language name for the current code
+        current_lang_name = self.languages.get(current_lang_code, current_lang_code)
+        # Set the displayed value to the language name
+        self.language_menu.set(current_lang_name)
     
     def on_language_change(self, selection):
-        # Convert displayed language name back to language code when user selects
-        self.language_var.set(selection)
+        # Convert the display name back to language code
+        for code, name in self.languages.items():
+            if name == selection:
+                self.language_var.set(code)
+                return
         
+        # If we get here, assume selection is already a code
+        self.language_var.set(selection)
+    
     def update_api_visibility(self):
         service = self.service_var.get()
         if service == "deepgram":
-            self.deepgram_frame.pack(fill="x", padx=20, pady=10)
+            self.deepgram_frame.pack(fill="x", padx=10, pady=5)
             self.openai_frame.pack_forget()
+            self.post_processing_frame.pack_forget()
         else:
             self.deepgram_frame.pack_forget()
-            self.openai_frame.pack(fill="x", padx=20, pady=10)
+            self.openai_frame.pack(fill="x", padx=10, pady=5)
+            self.post_processing_frame.pack(fill="x", padx=10, pady=5)
         
     def save_settings(self):
         self.settings['service'] = self.service_var.get()
         self.settings['api_key'] = self.deepgram_entry.get()
         self.settings['openai_api_key'] = self.openai_entry.get()
         self.settings['language'] = self.language_var.get()
+        self.settings['post_processing'] = self.post_processing_var.get()
         with open('settings.json', 'w') as f:
             json.dump(self.settings, f)
         self.dialog.destroy()
@@ -299,14 +364,14 @@ class VoiceTyperApp:
     def show_api_key_error(self, error_message="Invalid API Key detected"):
         error_dialog = ctk.CTkToplevel(self.root)
         error_dialog.title("API Key Error")
-        error_dialog.geometry("400x350")
+        error_dialog.geometry("400x400")
         error_dialog.transient(self.root)
         error_dialog.resizable(False, False)
         
         # Center the dialog
         error_dialog.geometry("+%d+%d" % (
             self.root.winfo_x() + (self.root.winfo_width() - 400) // 2,
-            self.root.winfo_y() + (self.root.winfo_height() - 350) // 2
+            self.root.winfo_y() + (self.root.winfo_height() - 400) // 2
         ))
         
         # Error message
@@ -328,7 +393,8 @@ class VoiceTyperApp:
             service_frame,
             text="Deepgram",
             variable=service_var,
-            value="deepgram"
+            value="deepgram",
+            command=lambda: update_visibility()
         )
         deepgram_radio.pack(anchor="w", pady=5)
         
@@ -336,9 +402,21 @@ class VoiceTyperApp:
             service_frame,
             text="OpenAI",
             variable=service_var,
-            value="openai"
+            value="openai",
+            command=lambda: update_visibility()
         )
         openai_radio.pack(anchor="w", pady=5)
+        
+        # Post-processing option (only for OpenAI)
+        post_processing_frame = ctk.CTkFrame(error_dialog)
+        post_processing_var = ctk.BooleanVar(value=self.settings.get('post_processing', False))
+        
+        post_processing_checkbox = ctk.CTkCheckBox(
+            post_processing_frame,
+            text="Enable GPT-4 Post-Processing",
+            variable=post_processing_var
+        )
+        post_processing_checkbox.pack(anchor="w", pady=5, padx=10)
         
         # Language selection
         language_frame = ctk.CTkFrame(error_dialog)
@@ -357,14 +435,32 @@ class VoiceTyperApp:
         # Create dropdown for language selection
         language_var = ctk.StringVar(value=self.settings.get('language', 'auto'))
         
-        language_options = list(languages.keys())
+        # Get language display names
+        language_display_names = list(languages.values())
+        
+        # Get current language name
+        current_lang_code = language_var.get()
+        current_lang_name = languages.get(current_lang_code, current_lang_code)
+        
         language_menu = ctk.CTkOptionMenu(
             language_frame,
-            values=language_options,
-            variable=language_var,
+            values=language_display_names,
+            variable=None,
             width=200
         )
         language_menu.pack(pady=5)
+        language_menu.set(current_lang_name)
+        
+        # Handle language selection
+        def on_language_change(selection):
+            # Convert display name to code
+            for code, name in languages.items():
+                if name == selection:
+                    language_var.set(code)
+                    return
+            language_var.set(selection)
+        
+        language_menu.configure(command=on_language_change)
         
         # API Key input
         api_entry = ctk.CTkEntry(
@@ -387,31 +483,49 @@ class VoiceTyperApp:
             else:
                 api_entry.insert(0, self.settings.get('openai_api_key', ''))
         
+        def update_visibility(*args):
+            if service_var.get() == "deepgram":
+                post_processing_frame.pack_forget()
+            else:
+                post_processing_frame.pack(fill="x", padx=20, pady=5)
+            update_api_entry()
+        
+        # Initial visibility
+        update_visibility()
+        
         service_var.trace_add("write", update_api_entry)
         
         def save_and_retry():
             new_key = api_entry.get()
             selected_service = service_var.get()
             selected_language = language_var.get()
+            selected_post_processing = post_processing_var.get()
             try:
                 # Try to initialize selected service with new key
                 if selected_service == "deepgram":
                     self.settings['api_key'] = new_key
                     self.settings['service'] = selected_service
-                    self.service = create_service(selected_service, new_key)
+                    self.service = create_service(selected_service, new_key, False)
                 else:
                     self.settings['openai_api_key'] = new_key
                     self.settings['service'] = selected_service
-                    self.service = create_service(selected_service, new_key)
+                    self.service = create_service(selected_service, new_key, selected_post_processing)
                 
                 # Save language setting
                 self.settings['language'] = selected_language
+                self.settings['post_processing'] = selected_post_processing
                 
                 # If successful, save the new settings
                 with open('settings.json', 'w') as f:
                     json.dump(self.settings, f)
                 error_dialog.destroy()
-                self.status_label.configure(text=f"{selected_service.capitalize()} API Key updated successfully!")
+                
+                # Update service label
+                post_process_text = " + GPT-4" if selected_post_processing and selected_service == "openai" else ""
+                language_name = SpeechToTextService.get_supported_languages().get(selected_language, selected_language)
+                self.service_label.configure(text=f"({selected_service.capitalize()}{post_process_text} - {language_name})")
+                
+                self.status_label.configure(text=f"{selected_service.capitalize()} API Key updated successfully!", text_color="green")
             except Exception as e:
                 message.configure(text=f"Invalid API Key: {str(e)}", text_color="red")
         
@@ -801,12 +915,14 @@ class VoiceTyperApp:
             service_type = self.settings.get('service', 'deepgram')
             api_key = self.settings.get('api_key' if service_type == 'deepgram' else 'openai_api_key', '')
             language_code = self.settings.get('language', 'auto')
+            post_processing = self.settings.get('post_processing', False)
             language_name = SpeechToTextService.get_supported_languages().get(language_code, language_code)
             
-            self.service = create_service(service_type, api_key)
+            self.service = create_service(service_type, api_key, post_processing)
             
             # Update service label
-            self.service_label.configure(text=f"({service_type.capitalize()} - {language_name})")
+            post_process_text = " + GPT-4" if post_processing and service_type == "openai" else ""
+            self.service_label.configure(text=f"({service_type.capitalize()}{post_process_text} - {language_name})")
             
             self.status_label.configure(
                 text=f"Settings updated, using {service_type.capitalize()} service with {language_name} language",

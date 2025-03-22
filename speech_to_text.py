@@ -40,11 +40,11 @@ class SpeechToTextService(ABC):
         }
 
 
-def create_service(service_type, api_key):
+def create_service(service_type, api_key, post_processing=False):
     """Factory function to create the appropriate speech-to-text service"""
     if service_type == "deepgram":
         return DeepgramService.initialize(api_key)
     elif service_type == "openai":
-        return OpenAIService.initialize(api_key)
+        return OpenAIService.initialize(api_key, post_processing)
     else:
         raise ValueError(f"Unsupported service type: {service_type}") 
