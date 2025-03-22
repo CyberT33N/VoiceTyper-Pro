@@ -4,21 +4,28 @@ A graphical interface for voice-to-text transcription using Python. This applica
 
 Alternative to Mac Whisper, Voice Access, and other voice typing tools.
 
-## Features
+![VoiceTyper Pro](https://github.com/perrypixel/VoiceTyper-Pro/raw/main/assets/app_icon.ico)
+
+## 🔥 Features
 - Real-time speech-to-text transcription
 - Multiple speech recognition services (Deepgram and OpenAI)
+- GPT-4o post-processing for improved transcript quality
 - Multiple language support with easy language selection
 - Automatic text insertion at cursor position
 - Keyboard shortcut support (F2)
-- Transcription logging
-- User-friendly GUI interface
+- Modern customized UI with dark mode
+- Transcription logging with expandable log view
+- System tray integration for minimized operation
+- Sound feedback for recording start/stop
+- User-friendly settings dialog
 
-## Requirements
-- Python 3.7 or higher
+## 🛠️ Requirements
+- Python 3.7 or higher (3.9 recommended)
 - Speech-to-text API key (Deepgram or OpenAI)
 - Operating System: Windows, macOS, or Linux
+- PortAudio (for PyAudio)
 
-## Setup Instructions
+## 🚀 Setup Instructions
 
 1. Install the required dependencies:
 
@@ -55,27 +62,55 @@ python main.py
 4. Enjoy!
 
 
-## Usage
+## 🎯 Usage
 - Click the "Start Recording" button or press F2 to begin recording
 - Click again or press F2 to stop recording
 - The transcribed text will appear in the window and be typed at your cursor position
-- All transcriptions are logged in transcribe.log
-- Switch between Deepgram and OpenAI in the settings dialog
-- Select your preferred language in the settings dialog
+- Transcriptions are automatically logged and viewable in the expandable log section
+- Customize settings by clicking the gear icon:
+  - Switch between Deepgram and OpenAI services
+  - Select your preferred language
+  - Toggle GPT-4o post-processing (for OpenAI service)
+  - Test your API key directly from the settings dialog
+- Minimize to system tray for unobtrusive operation
 
-## Supported Services
+## 🧠 Advanced Features
+
+### GPT-4o Post-Processing
+When using the OpenAI service, you can enable GPT-4o post-processing to significantly improve the quality of transcriptions:
+- Fixes grammatical errors
+- Adds appropriate punctuation
+- Corrects word misrecognitions
+- Maintains the original meaning and intent
+- Preserves technical terms and proper nouns
+- Language-specific enhancements for German, French, and Spanish
+
+### System Tray Integration
+- Application can be minimized to system tray
+- Continue recording and transcribing even when minimized
+- Quick access to show/hide the application or quit
+
+### Customizable UI
+- Modern dark theme with AI gradient color scheme
+- Expandable/collapsible log view
+- Smooth animations for better user experience
+- Sound feedback for recording status changes
+
+## 🌐 Supported Services
 
 ### Deepgram
 - High-quality speech recognition 
 - Fast processing
 - Multiple language support
+- Uses the nova-2 model for improved accuracy
 
 ### OpenAI (Whisper)
 - State-of-the-art accuracy
 - Wide language support (15+ languages)
 - Enhanced contextual understanding
+- Optional GPT-4o post-processing
 
-## Supported Languages
+## 🗣️ Supported Languages
 
 The application supports many languages including:
 - English
@@ -88,12 +123,19 @@ The application supports many languages including:
 - Russian (Русский)
 - Portuguese (Português)
 - Korean (한국어)
-- And more!
+- Arabic (العربية)
+- Dutch (Nederlands)
+- Swedish (Svenska)
+- Polish (Polski)
 
 You can also use Auto-detect mode to let the service determine the language automatically.
 
-## Support
+## 💪 Support
 If you find this tool helpful, you can support the development by:
 - Buying me a coffee at https://ko-fi.com/perrypixel
 - UPI to kevinp@apl
+
+## 🙏 Contributors
+- https://github.com/perrypixel
+- https://github.com/CyberT33N
 
