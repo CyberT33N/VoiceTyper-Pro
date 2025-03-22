@@ -4,7 +4,7 @@ A graphical interface for voice-to-text transcription using Python. This applica
 
 Alternative to Mac Whisper, Voice Access, and other voice typing tools.
 
-![VoiceTyper Pro](https://github.com/perrypixel/VoiceTyper-Pro/raw/main/assets/app_icon.ico)
+![VoiceTyper Pro](preview.png)
 
 ## 🔥 Features
 - Real-time speech-to-text transcription
