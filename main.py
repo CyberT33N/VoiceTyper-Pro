@@ -6,7 +6,7 @@ import time
 import pyaudio
 import wave
 import os
-from playsound import playsound
+# from playsound import playsound
 from datetime import datetime
 from deepgram import Deepgram
 from dotenv import load_dotenv
@@ -19,6 +19,37 @@ from deepgram.errors import DeepgramSetupError
 # Set theme and color scheme
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
+
+# Simple alternative to playsound
+def play_sound(sound_file):
+    try:
+        # Open the sound file
+        wf = wave.open(sound_file, 'rb')
+        
+        # Create PyAudio object
+        p = pyaudio.PyAudio()
+        
+        # Open stream
+        stream = p.open(
+            format=p.get_format_from_width(wf.getsampwidth()),
+            channels=wf.getnchannels(),
+            rate=wf.getframerate(),
+            output=True
+        )
+        
+        # Read data in chunks and play
+        chunk_size = 1024
+        data = wf.readframes(chunk_size)
+        while data:
+            stream.write(data)
+            data = wf.readframes(chunk_size)
+            
+        # Close everything
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
+    except Exception as e:
+        print(f"Error playing sound: {str(e)}")
 
 class SettingsDialog:
     def __init__(self, parent):
@@ -354,7 +385,7 @@ class VoiceTyperApp:
         )
         
         frames = []
-        playsound("assets/on.wav")
+        play_sound("assets/on.wav")
         
         while not self.stop_recording:
             data = stream.read(chunk)
@@ -363,7 +394,7 @@ class VoiceTyperApp:
         stream.stop_stream()
         stream.close()
         p.terminate()
-        playsound("assets/off.wav")
+        play_sound("assets/off.wav")
         
         # Save recording
         wf = wave.open(f"test{self.file_ready_counter+1}.wav", 'wb')
