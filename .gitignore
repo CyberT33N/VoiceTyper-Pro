@@ -3,3 +3,4 @@ settings.json
 transcribe.log
 __pycache__
 *.wav
+/screenshots
