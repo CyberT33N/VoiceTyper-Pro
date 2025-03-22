@@ -1,0 +1,153 @@
+**Rolle:** Weltklasse Senior Python Entwickler & Prompt Engineer (15+ Jahre Python Erfahrung, Experte für LLMs in Python-Projekten)
+
+**Ziel:** Generiere **exzellenten Python-Code** für die Aufgabe "xxx" mit Cursor. Der Code soll nicht nur funktionieren, sondern auch **Pythonic**, **lesbar**, **wartbar**, **performant** und **gut getestet** sein.
+
+**WICHTIG:**  Passe diese Vorlage **akribisch** an deine Python-spezifische Aufgabe "xxx" an.  Je genauer du die Python-Details definierst, desto besser wird der generierte Python-Code.
+
+---
+
+## 1. Einleitung / Kontext-Setup (Python-Spezifisch)
+
+### 1.1 Python Aufgabenbeschreibung:
+
+**[Hier detaillierte Beschreibung der Python-Aufgabe "xxx" einfügen]**
+
+*   **Python-Fokus:** Beschreibe die Aufgabe *explizit* im Kontext von Python.
+*   **Python-Beispiele zur Aufgabenbeschreibung:**
+    *   "Schreibe ein Python-Skript, um [Aufgabe] zu automatisieren."
+    *   "Entwickle eine Python-Funktion mit `pandas` und `numpy`, um [Datenanalyse-Aufgabe] durchzuführen."
+    *   "Implementiere eine Flask/Django API-Endpunkt in Python für [Web-Funktionalität]."
+    *   "Erstelle eine Python-Klasse zur [Objektorientierte Aufgabe]."
+    *   "Schreibe Unit-Tests mit `pytest`/`unittest` für [Python-Modul/Funktion]."
+    *   "Refaktorisiere existierenden Python-Code, um [Verbesserung, z.B. Performance, Lesbarkeit, Type Hints]."
+
+### 1.2 Python Kontextinformationen:
+
+**[Hier Python-spezifische Kontextinformationen einfügen]**
+
+*   **Python Version:** [z.B. Python 3.8, Python 3.9, Python 3.10, etc. - **WICHTIG!**]
+*   **Python Frameworks/Bibliotheken:** [z.B. `pandas`, `numpy`, `scikit-learn`, `requests`, `Flask`, `Django`, `asyncio`, `pytest`, `unittest`, etc. - **Liste explizit die benötigten Python-Bibliotheken auf.**]
+*   **Python Projektkontext:** [z.B. "Teil eines Data-Science-Projekts", "Backend für eine Webanwendung", "Skript für Systemadministration", "Microservice in Python", etc.]
+*   **Python-Spezifische Anforderungen:** [z.B. "Muss **PEP 8** konform sein", "Verwendung von **Type Hints** ist erwünscht/obligatorisch", "Muss **virtuelle Umgebungen** unterstützen", "Datenbankzugriff mit `SQLAlchemy`/`psycopg2`", "Asynchrone Programmierung mit `asyncio`", "Fehlerbehandlung mit spezifischen Exceptions", "Logging mit `logging` Modul", "Konfiguration über Umgebungsvariablen/Config-Dateien", etc.]
+*   **Relevante Python-Dateien/Code-Schnipsel (für RAG):**
+    ```python
+    [Optional: Python-Code-Schnipsel oder Dateipfade einfügen, auf die sich Cursor beziehen soll.
+     Beispiel:
+     - Datei: src/data_processing.py
+     - Code-Schnipsel (Python):
+       ```python
+       def load_data(filepath):
+           # ... bestehender Python-Code ...
+           return data
+       ```
+    ]
+    ```
+
+### 1.3 Python Ziele und Erwartungen:
+
+**[Hier Python-spezifische Ziele und Erwartungen an den generierten Python-Code formulieren]**
+
+*   **Pythonic Code:** [z.B. "Der Code soll **Pythonic** sein und idiomatische Python-Muster verwenden."]
+*   **Qualität (Python-Fokus):** [z.B. "Der Python-Code soll **lesbar**, **wartbar**, **modular**, **gut dokumentiert** (Docstrings!) und **fehlerrobust** sein."]
+*   **Performance (Python-Fokus):** [z.B. "Der Python-Code sollte **performant** sein, insbesondere bei [kritischer Operation]. Beachte Python's GIL falls relevant.", "Optimiere für [bestimmte Python-Bibliothek/Operation]."]
+*   **Testing (Python-Fokus):** [z.B. "Unit-Tests mit `pytest`/`unittest` sind **obligatorisch** für alle Funktionen/Klassen.", "Stelle **100% Code Coverage** sicher (falls relevant).", "Verwende **Test-Driven Development (TDD)** Ansatz (optional)."]
+*   **Type Hints (Python-Fokus):** [z.B. "**Verwende Type Hints** für alle Funktionen und Variablen.", "Stelle sicher, dass der Code **mit `mypy` ohne Fehler** durchläuft."]
+*   **Error Handling (Python-Fokus):** [z.B. "Implementiere **saubere Fehlerbehandlung** mit Python Exceptions.", "Behandle spezifische Exceptions wie [z.B. `FileNotFoundError`, `ValueError`, `TypeError`].", "Verwende `try...except` Blöcke."]
+*   **Logging (Python-Fokus):** [z.B. "Integriere **Logging** mit dem `logging` Modul.", "Logge wichtige Ereignisse und Fehler auf [Log-Level, z.B. INFO, ERROR]."]
+
+---
+
+## 3. Prompt Elemente (Detaillierte Python-Anweisungen für Cursor)
+
+### 3.1 Python Rolle und Persona für Cursor (Optional)
+
+**[Optional: Weise Cursor eine Python-spezifische Rolle zu.]**
+
+*   "Verhalte dich wie ein **Senior Python Backend Entwickler** mit 10+ Jahren Erfahrung in [Framework, z.B. Django, Flask]."
+*   "Du bist ein **Python Data Scientist Experte** und kennst dich bestens mit `pandas`, `numpy` und `scikit-learn` aus."
+*   "Verhalte dich wie ein **Python Code Reviewer** und achte besonders auf PEP 8 Konformität, Type Hints und Testabdeckung."
+*   "Du bist ein **Python Perfektionist** und strebst nach *elegantem*, *effizientem* und *Pythonic* Code."
+*   "Verhalte dich wie ein **erfahrener Python Scripting Experte** für Systemadministration und Automatisierung."
+
+### 3.2 Detaillierte Python-Anweisungen und Constraints:
+
+**[Hier die *eigentlichen* Python-Anweisungen für Cursor. Sei *extrem* präzise und Python-zentriert.]**
+
+*   **Python Keywords und Aktionsverben:** (Siehe vorherige Vorlage - gilt auch für Python).
+*   **Python Constraints (MUSS, DARF NICHT, SOLLTE, KANN - Python-spezifisch):**
+    *   "Der Python-Code **MUSS** PEP 8 konform sein."
+    *   "Der Python-Code **MUSS** Type Hints verwenden."
+    *   "Der Python-Code **DARF NICHT** externe Python-Bibliotheken verwenden, außer [Liste erlaubter Python-Bibliotheken]."
+    *   "Der Python-Code **SOLLTE** effizient sein und unnötige Schleifen/Berechnungen vermeiden (Python-Performance Best Practices)."
+    *   "Der Python-Code **KANN** optionale Python-Features wie [z.B. Dataclasses, Enums, Walrus Operator (Python 3.8+)] verwenden, falls sinnvoll."
+*   **Python-Beispiele für detaillierte Anweisungen:**
+    *   "**IMPLEMENTIERE** eine Python-Funktion `analyze_data(data)` mit `pandas`, die [Datenanalyse-Aufgabe] durchführt. **VERWENDE** `pandas DataFrames` und `numpy` für effiziente Berechnungen. **GIB** das Ergebnis als `pandas DataFrame` zurück. **SCHREIBE** Unit-Tests mit `pytest`."
+    *   "**ERSTELLE** einen Flask API Endpunkt `/api/users` in Python, der CRUD-Operationen für Benutzer ermöglicht. **VERWENDE** `Flask-RESTful` oder ähnliches für eine saubere API-Struktur. **VALIDIERE** Input-Daten mit `marshmallow` oder `pydantic`. **DOKUMENTIERE** den API-Endpunkt mit Swagger/OpenAPI Spezifikation (optional)."
+    *   "**REFACTORISIERE** den folgenden Python-Code-Abschnitt [füge Python-Code-Abschnitt hier ein], um ihn **Pythonic** zu machen und die Lesbarkeit zu verbessern. **VERWENDE** Pythonic Idiome wie List Comprehensions, Generatoren, Kontextmanager (falls anwendbar). **FÜGE** Type Hints hinzu."
+    *   "**DOKUMENTIERE** die Python-Klasse `DataProcessor` mit **NumPy-Style Docstrings**. Beschreibe alle Methoden, Attribute und Parameter *detailliert* und **PEP 257** konform."
+    *   "**TESTE** die Python-Funktion `process_order(order)` mit `pytest`. **SCHREIBE** Unit-Tests für positive und negative Fälle, sowie Edge-Cases. **VERWENDE** Mocks/Stubs für externe Abhängigkeiten (falls vorhanden)."
+    *   "**OPTIMIERE** die Python-Funktion `calculate_complex_matrix_operation(matrix)` für Performance. **VERWENDE** `numpy` für vektorisierte Operationen anstelle von Schleifen. **PROFILIERE** den Code (optional) und **IDENTIFIZIERE** Performance-Bottlenecks."
+    *   "**ANALYSIERE** den folgenden Python-Code auf mögliche Sicherheitslücken (z.B. Injection, unsichere Deserialisierung) und **GIB** Empfehlungen zur Behebung. **KONZENTRIERE** dich auf [spezifische Sicherheitsrisiken, falls bekannt]."
+    *   "**DEBUGGE** den Fehler im Python-Skript `data_pipeline.py`. Der Fehler tritt auf bei [beschreibe Fehlerbedingung]. **VERWENDE** den Python Debugger (`pdb` oder ähnliches) um den Fehler zu finden und **ZU BEHEBEN**. **SCHREIBE** Unit-Tests, um den Fehlerfall zukünftig zu verhindern."
+
+### 3.3 Python Formatvorgaben:
+
+**[Gib explizit Python-spezifische Formatvorgaben an.]**
+
+*   **Python Code:** "Generiere **Python 3.x Code**."
+*   **Python Skript/Modul/Paket:** "Erstelle ein **Python Skript**.", "Generiere ein **Python Modul**.", "Strukturiere den Code als **Python Paket** (falls komplexer).".
+*   **PEP 8 Style:** "Der generierte Python-Code **MUSS** PEP 8 Styleguide folgen." (Cursor sollte das idealerweise automatisch berücksichtigen).
+*   **Docstring Format:** "Verwende **NumPy-Style Docstrings** für Python-Dokumentation." (oder Google Style, reStructuredText, etc., falls bevorzugt).
+*   **Type Hints:** "Der Python-Code **MUSS** mit **Type Hints** versehen sein (PEP 484)."
+
+### 3.4 Python Beispiele (Few-shot Elemente - OPTIONAL):
+
+**[Optional: Python-spezifische Beispiele für Input und Output.]**
+
+*   **Python Beispiel 1: Input:** `[Python-Input-Beispiel 1 (z.B. Datenstruktur, Code-Schnipsel)]`  **Gewünschter Output:** `[Python-Output-Beispiel 1 (z.B. Python-Code, Ergebnis)]`
+*   **Python Beispiel 2: Input:** `[Python-Input-Beispiel 2]`  **Gewünschter Output:** `[Python-Output-Beispiel 2]`
+*   **Python Beispiel 3: Input:** `[Python-Input-Beispiel 3]`  **Gewünschter Output:** `[Python-Output-Beispiel 3]`
+
+**Beispiel für Python Code-Beispiele:**
+
+```python
+Beispiel 1: Input: Python Liste von Dictionaries: `[{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]`  Gewünschter Output: Python Code mit pandas, um Durchschnittsalter zu berechnen.
+
+Beispiel 2: Input: Python Funktion ohne Type Hints:
+```python
+def add(a, b):
+    return a + b
+```
+Gewünschter Output: Python Funktion MIT Type Hints:
+```python
+def add(a: int, b: int) -> int:
+    return a + b
+```
+
+Beispiel 3: Input: Python Code mit ineffizienter Schleife [füge Python-Code-Schnipsel hier ein] Gewünschter Output: Refactorierter Python Code mit `numpy` für vektorisierte Operationen.
+```
+
+---
+
+## 4. Allgemeine Tipps für Python Promptgestaltung (Meta-Ebene)
+
+*   **Iterative Verfeinerung (Python):**  Testen, Testen, Testen! Python-Code gründlich testen mit Unit-Tests und Integrationstests. Prompt iterativ verfeinern basierend auf Testergebnissen.
+*   **Klarheit und Präzision (Python):**  Nochmal betonen: **Python-spezifische** Begriffe und Bibliotheken verwenden.  **PEP 8**, **Type Hints**, **Pythonic Code** - klar kommunizieren.
+*   **Testen und Evaluieren (Python):**  **Unit-Tests sind dein Freund!** Nutze sie extensiv, um die Korrektheit des generierten Python-Codes zu validieren.
+*   **Modularität und Wiederverwendbarkeit (Python):**  Python-Module und Pakete fördern Modularität.  Gestalte Prompts so, dass wiederverwendbare Python-Komponenten entstehen.
+*   **Kommentare und Docstrings (Python CoT):** Fordere Cursor auf, **Python Docstrings** im NumPy-Stil zu generieren und *inline Kommentare* zu verwenden, um die Python-Code-Logik zu erklären.
+*   **Experimentieren (Python):**  Python bietet viele Möglichkeiten.  Experimentiere mit verschiedenen Python-Bibliotheken, Sprachfeatures und Prompt-Formulierungen.
+*   **RAG für Python Projekte:**  Python-Projekte profitieren stark von RAG.  Gib Cursor Zugriff auf relevante Python-Dateien, Projektstruktur und bestehenden Python-Code.
+*   **Self-Consistency (Python Style):**  Achte auf **konsistenten Python-Stil** (PEP 8, Namenskonventionen) im gesamten generierten Code.
+
+---
+
+## 5. Beispiele für Python Prompts (als Inspiration)
+
+**[Optionale Beispiele für verschiedene Python-Prompt-Typen. Hier können noch mehr Python-spezifische Beispiele hinzugefügt werden.]**
+
+*   **Beispiel 1: Python Skript Generierung (Einfach):** (Beispiel Fakultät - siehe vorherige Antwort, an Python angepasst).
+*   **Beispiel 2: Python Code Refactoring (Mittel - Python-spezifisch):** (Beispiel Callback-Hell durch `asyncio` ersetzen, oder Schleifen durch `numpy` Operationen ersetzen).
+*   **Beispiel 3: Python Code Dokumentation (Einfach - Python Docstrings):** (Beispiel `ShoppingCart` Klasse mit NumPy-Style Docstrings).
+*   **Beispiel 4: Python Unit-Test Generierung (Mittel):** "Generiere `pytest` Unit-Tests für die Python-Funktion `calculate_statistics(data)` [füge Code der Funktion hier ein]. Stelle sicher, dass Tests für verschiedene Datentypen und Fehlerfälle abgedeckt sind."
+*   **Beispiel 5: Python API Endpunkt Generierung (Komplex):** "Entwickle einen Flask API Endpunkt `/products` in Python, der es ermöglicht, Produkte zu erstellen, abzurufen, zu aktualisieren und zu löschen (CRUD). Verwende SQLAlchemy für Datenbankzugriff auf eine PostgreSQL Datenbank. Implementiere Authentifizierung mit JWT. Validierung der Input-Daten mit `pydantic`. Schreibe Unit-Tests und Integrationstests."

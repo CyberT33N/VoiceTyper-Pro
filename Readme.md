@@ -21,6 +21,21 @@ Alternative to Mac Whisper, Voice Access, and other voice typing tools.
 1. Install the required dependencies:
 
 ```bash
+cd C:\Projects\utils\ai\voice
+git clone https://github.com/perrypixel/VoiceTyper-Pro.git
+cd VoiceTyper-Pro
+
+pyenv install 3.9
+pyenv local 3.9
+
+python3 -m venv venv
+
+# Linux
+source venv/bin/activate
+
+# Windows
+venv\Scripts\activate
+
 pip install -r requirements.txt
 ```
 
