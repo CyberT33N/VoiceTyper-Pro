@@ -21,6 +21,8 @@ Alternative to Mac Whisper, Voice Access, and other voice typing tools.
 1. Install the required dependencies:
 
 ```bash
+sudo apt-get install portaudio19-dev
+
 cd C:\Projects\utils\ai\voice
 git clone https://github.com/perrypixel/VoiceTyper-Pro.git
 cd VoiceTyper-Pro
