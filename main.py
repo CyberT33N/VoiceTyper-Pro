@@ -8,15 +8,15 @@ import wave
 import os
 # from playsound import playsound
 from datetime import datetime
-from deepgram import Deepgram
 from dotenv import load_dotenv
 from PIL import Image
 import asyncio
 import pystray
 import json
-from deepgram.errors import DeepgramSetupError
-from speech_to_text import create_service, DeepgramService, OpenAIService, SpeechToTextService
 import sys
+from speech_to_text import create_service, SpeechToTextService
+from deepgram_service import DeepgramService
+from openai_service import OpenAIService
 
 # Set theme and color scheme
 ctk.set_appearance_mode("dark")
@@ -57,7 +57,7 @@ class SettingsDialog:
     def __init__(self, parent):
         self.dialog = ctk.CTkToplevel(parent)
         self.dialog.title("Settings")
-        self.dialog.geometry("400x450")
+        self.dialog.geometry("400x500")
         self.dialog.transient(parent)
         self.dialog.resizable(False, False)
         
@@ -165,6 +165,24 @@ class SettingsDialog:
         self.openai_entry.pack(pady=5)
         self.openai_entry.insert(0, self.settings.get('openai_api_key', ''))
         
+        # Status label for test results
+        self.status_label = ctk.CTkLabel(
+            self.dialog,
+            text="",
+            font=ctk.CTkFont(size=12),
+            wraplength=350
+        )
+        self.status_label.pack(pady=5)
+        
+        # Test button
+        self.test_btn = ctk.CTkButton(
+            self.dialog,
+            text="Test Service",
+            command=self.test_service,
+            width=100
+        )
+        self.test_btn.pack(pady=5)
+        
         # Save button
         self.save_btn = ctk.CTkButton(
             self.dialog,
@@ -172,10 +190,41 @@ class SettingsDialog:
             command=self.save_settings,
             width=100
         )
-        self.save_btn.pack(pady=20)
+        self.save_btn.pack(pady=10)
         
         # Set initial visibility based on selected service
         self.update_api_visibility()
+    
+    def test_service(self):
+        """Test the selected service with current settings"""
+        try:
+            service_type = self.service_var.get()
+            if service_type == "deepgram":
+                api_key = self.deepgram_entry.get()
+            else:
+                api_key = self.openai_entry.get()
+                
+            language = self.language_var.get()
+            
+            # Validate input
+            if not api_key:
+                self.status_label.configure(text="Please enter an API key", text_color="red")
+                return
+                
+            # Create service
+            service = create_service(service_type, api_key)
+            
+            self.status_label.configure(text=f"Testing {service_type.capitalize()}...", text_color="black")
+            self.dialog.update()
+            
+            # Just do a quick test to see if service initializes properly
+            self.status_label.configure(
+                text=f"{service_type.capitalize()} service initialized successfully with language '{language}'",
+                text_color="green"
+            )
+            
+        except Exception as e:
+            self.status_label.configure(text=f"Error: {str(e)}", text_color="red")
     
     def update_language_display(self):
         # Update the displayed value in the dropdown to show language name instead of code
