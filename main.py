@@ -15,6 +15,7 @@ import asyncio
 import pystray
 import json
 from deepgram.errors import DeepgramSetupError
+from speech_to_text import create_service, DeepgramService, OpenAIService
 
 # Set theme and color scheme
 ctk.set_appearance_mode("dark")
@@ -55,32 +56,83 @@ class SettingsDialog:
     def __init__(self, parent):
         self.dialog = ctk.CTkToplevel(parent)
         self.dialog.title("Settings")
-        self.dialog.geometry("400x200")
+        self.dialog.geometry("400x350")
         self.dialog.transient(parent)
         self.dialog.resizable(False, False)
         
-        # Load current API key
+        # Load current settings
         with open('settings.json', 'r') as f:
             self.settings = json.load(f)
         
-        # API Key input
-        self.api_frame = ctk.CTkFrame(self.dialog)
-        self.api_frame.pack(fill="x", padx=20, pady=20)
+        # Service selection frame
+        self.service_frame = ctk.CTkFrame(self.dialog)
+        self.service_frame.pack(fill="x", padx=20, pady=(20, 10))
         
-        self.api_label = ctk.CTkLabel(
-            self.api_frame, 
+        self.service_label = ctk.CTkLabel(
+            self.service_frame, 
+            text="Speech-to-Text Service:",
+            font=ctk.CTkFont(size=14)
+        )
+        self.service_label.pack(anchor="w", pady=5)
+        
+        # Radio buttons for service selection
+        self.service_var = ctk.StringVar(value=self.settings.get('service', 'deepgram'))
+        
+        self.deepgram_radio = ctk.CTkRadioButton(
+            self.service_frame,
+            text="Deepgram",
+            variable=self.service_var,
+            value="deepgram",
+            command=self.update_api_visibility
+        )
+        self.deepgram_radio.pack(anchor="w", pady=5, padx=10)
+        
+        self.openai_radio = ctk.CTkRadioButton(
+            self.service_frame,
+            text="OpenAI",
+            variable=self.service_var,
+            value="openai",
+            command=self.update_api_visibility
+        )
+        self.openai_radio.pack(anchor="w", pady=5, padx=10)
+        
+        # Deepgram API Key input
+        self.deepgram_frame = ctk.CTkFrame(self.dialog)
+        self.deepgram_frame.pack(fill="x", padx=20, pady=10)
+        
+        self.deepgram_label = ctk.CTkLabel(
+            self.deepgram_frame, 
             text="Deepgram API Key:",
             font=ctk.CTkFont(size=14)
         )
-        self.api_label.pack(anchor="w", pady=5)
+        self.deepgram_label.pack(anchor="w", pady=5)
         
-        self.api_entry = ctk.CTkEntry(
-            self.api_frame,
+        self.deepgram_entry = ctk.CTkEntry(
+            self.deepgram_frame,
             width=300,
             font=ctk.CTkFont(size=14)
         )
-        self.api_entry.pack(pady=5)
-        self.api_entry.insert(0, self.settings.get('api_key', ''))
+        self.deepgram_entry.pack(pady=5)
+        self.deepgram_entry.insert(0, self.settings.get('api_key', ''))
+        
+        # OpenAI API Key input
+        self.openai_frame = ctk.CTkFrame(self.dialog)
+        self.openai_frame.pack(fill="x", padx=20, pady=10)
+        
+        self.openai_label = ctk.CTkLabel(
+            self.openai_frame, 
+            text="OpenAI API Key:",
+            font=ctk.CTkFont(size=14)
+        )
+        self.openai_label.pack(anchor="w", pady=5)
+        
+        self.openai_entry = ctk.CTkEntry(
+            self.openai_frame,
+            width=300,
+            font=ctk.CTkFont(size=14)
+        )
+        self.openai_entry.pack(pady=5)
+        self.openai_entry.insert(0, self.settings.get('openai_api_key', ''))
         
         # Save button
         self.save_btn = ctk.CTkButton(
@@ -91,8 +143,22 @@ class SettingsDialog:
         )
         self.save_btn.pack(pady=20)
         
+        # Set initial visibility based on selected service
+        self.update_api_visibility()
+        
+    def update_api_visibility(self):
+        service = self.service_var.get()
+        if service == "deepgram":
+            self.deepgram_frame.pack(fill="x", padx=20, pady=10)
+            self.openai_frame.pack_forget()
+        else:
+            self.deepgram_frame.pack_forget()
+            self.openai_frame.pack(fill="x", padx=20, pady=10)
+        
     def save_settings(self):
-        self.settings['api_key'] = self.api_entry.get()
+        self.settings['service'] = self.service_var.get()
+        self.settings['api_key'] = self.deepgram_entry.get()
+        self.settings['openai_api_key'] = self.openai_entry.get()
         with open('settings.json', 'w') as f:
             json.dump(self.settings, f)
         self.dialog.destroy()
@@ -110,14 +176,15 @@ class VoiceTyperApp:
         self.stop_recording = False
         self.pykeyboard = keyboard.Controller()
         self.recording_animation_active = False
+        self.service = None
         
-        # Try to load settings and initialize Deepgram
+        # Try to load settings and initialize Speech-to-Text service
         try:
             self.load_settings()
-        except DeepgramSetupError:
+        except ValueError as ve:
             # Show settings dialog immediately if API key is invalid
             self.setup_ui()  # Setup UI first
-            self.show_api_key_error()
+            self.show_api_key_error(str(ve))
         except Exception as e:
             self.setup_ui()
             self.show_error(f"Error: {str(e)}")
@@ -138,50 +205,94 @@ class VoiceTyperApp:
         self.setup_ui()
         self.start_transcription_thread()
         
-    def show_api_key_error(self):
+    def show_api_key_error(self, error_message="Invalid API Key detected"):
         error_dialog = ctk.CTkToplevel(self.root)
         error_dialog.title("API Key Error")
-        error_dialog.geometry("400x200")
+        error_dialog.geometry("400x250")
         error_dialog.transient(self.root)
         error_dialog.resizable(False, False)
         
         # Center the dialog
         error_dialog.geometry("+%d+%d" % (
             self.root.winfo_x() + (self.root.winfo_width() - 400) // 2,
-            self.root.winfo_y() + (self.root.winfo_height() - 200) // 2
+            self.root.winfo_y() + (self.root.winfo_height() - 250) // 2
         ))
         
         # Error message
         message = ctk.CTkLabel(
             error_dialog,
-            text="Invalid Deepgram API Key detected.\nPlease enter a valid API key to continue.",
+            text=f"{error_message}.\nPlease enter valid API keys to continue.",
             font=ctk.CTkFont(size=14),
             wraplength=350
         )
         message.pack(pady=20)
         
+        # Service selection
+        service_frame = ctk.CTkFrame(error_dialog)
+        service_frame.pack(fill="x", padx=20, pady=5)
+        
+        service_var = ctk.StringVar(value=self.settings.get('service', 'deepgram'))
+        
+        deepgram_radio = ctk.CTkRadioButton(
+            service_frame,
+            text="Deepgram",
+            variable=service_var,
+            value="deepgram"
+        )
+        deepgram_radio.pack(anchor="w", pady=5)
+        
+        openai_radio = ctk.CTkRadioButton(
+            service_frame,
+            text="OpenAI",
+            variable=service_var,
+            value="openai"
+        )
+        openai_radio.pack(anchor="w", pady=5)
+        
         # API Key input
         api_entry = ctk.CTkEntry(
             error_dialog,
             width=300,
-            font=ctk.CTkFont(size=14)
+            font=ctk.CTkFont(size=14),
+            placeholder_text="Enter API key for selected service"
         )
         api_entry.pack(pady=10)
-        api_entry.insert(0, self.settings.get('api_key', ''))
+        
+        if service_var.get() == "deepgram":
+            api_entry.insert(0, self.settings.get('api_key', ''))
+        else:
+            api_entry.insert(0, self.settings.get('openai_api_key', ''))
+        
+        def update_api_entry(*args):
+            api_entry.delete(0, 'end')
+            if service_var.get() == "deepgram":
+                api_entry.insert(0, self.settings.get('api_key', ''))
+            else:
+                api_entry.insert(0, self.settings.get('openai_api_key', ''))
+        
+        service_var.trace_add("write", update_api_entry)
         
         def save_and_retry():
             new_key = api_entry.get()
+            selected_service = service_var.get()
             try:
-                # Try to initialize Deepgram with new key
-                self.deepgram = Deepgram(new_key)
-                # If successful, save the new key
-                self.settings['api_key'] = new_key
+                # Try to initialize selected service with new key
+                if selected_service == "deepgram":
+                    self.settings['api_key'] = new_key
+                    self.settings['service'] = selected_service
+                    self.service = create_service(selected_service, new_key)
+                else:
+                    self.settings['openai_api_key'] = new_key
+                    self.settings['service'] = selected_service
+                    self.service = create_service(selected_service, new_key)
+                
+                # If successful, save the new settings
                 with open('settings.json', 'w') as f:
                     json.dump(self.settings, f)
                 error_dialog.destroy()
-                self.status_label.configure(text="API Key updated successfully!")
-            except DeepgramSetupError:
-                message.configure(text="Invalid API Key. Please try again.", text_color="red")
+                self.status_label.configure(text=f"{selected_service.capitalize()} API Key updated successfully!")
+            except Exception as e:
+                message.configure(text=f"Invalid API Key: {str(e)}", text_color="red")
         
         # Save button
         save_btn = ctk.CTkButton(
@@ -203,14 +314,17 @@ class VoiceTyperApp:
             with open('settings.json', 'r') as f:
                 self.settings = json.load(f)
         except FileNotFoundError:
-            self.settings = {'api_key': ''}
+            self.settings = {'api_key': '', 'service': 'deepgram', 'openai_api_key': ''}
             
+        service_type = self.settings.get('service', 'deepgram')
+        api_key = self.settings.get('api_key' if service_type == 'deepgram' else 'openai_api_key', '')
+        
         try:
-            self.deepgram = Deepgram(self.settings['api_key'])
-        except DeepgramSetupError:
-            raise
+            self.service = create_service(service_type, api_key)
+        except ValueError as ve:
+            raise ValueError(f"Invalid {service_type.capitalize()} API Key")
         except Exception as e:
-            raise Exception(f"Failed to initialize Deepgram: {str(e)}")
+            raise Exception(f"Failed to initialize {service_type.capitalize()}: {str(e)}")
         
     def setup_system_tray(self):
         # Create system tray icon
@@ -240,6 +354,15 @@ class VoiceTyperApp:
             font=ctk.CTkFont(size=20, weight="bold")
         )
         self.title_label.pack(side="left", padx=10)
+        
+        # Service indicator
+        service_type = self.settings.get('service', 'deepgram').capitalize()
+        self.service_label = ctk.CTkLabel(
+            self.header_frame,
+            text=f"({service_type})",
+            font=ctk.CTkFont(size=12, slant="italic")
+        )
+        self.service_label.pack(side="left", padx=5)
         
         # Settings button
         self.settings_btn = ctk.CTkButton(
@@ -332,7 +455,7 @@ class VoiceTyperApp:
                 self.record_button.configure(fg_color="#c93434")
     
     def toggle_recording(self):
-        if not hasattr(self, 'deepgram'):
+        if not hasattr(self, 'service'):
             self.show_api_key_error()
             return
             
@@ -411,15 +534,12 @@ class VoiceTyperApp:
         self.status_label.configure(text="Processing transcription...")
         
     async def transcribe_audio(self, audio_file):
-        with open(audio_file, 'rb') as audio:
-            source = {'buffer': audio, 'mimetype': 'audio/wav'}
-            options = {
-                'punctuate': True,
-                'language': 'de',
-                'model': 'nova-2',
-            }
-            response = await self.deepgram.transcription.prerecorded(source, options)
-            return response['results']['channels'][0]['alternatives'][0]['transcript']
+        try:
+            # Get language from settings, default to English
+            language = self.settings.get('language', 'en')
+            return await self.service.transcribe_audio(audio_file, language)
+        except Exception as e:
+            raise Exception(f"Transcription error: {str(e)}")
             
     def start_transcription_thread(self):
         threading.Thread(target=self.transcribe_speech).start()
@@ -527,7 +647,33 @@ class VoiceTyperApp:
         self.root.quit()
 
     def open_settings(self):
-        SettingsDialog(self.root)
+        settings_dialog = SettingsDialog(self.root)
+        
+        # Wait for dialog to be destroyed
+        self.root.wait_window(settings_dialog.dialog)
+        
+        # Reload settings and initialize service
+        try:
+            with open('settings.json', 'r') as f:
+                self.settings = json.load(f)
+                
+            service_type = self.settings.get('service', 'deepgram')
+            api_key = self.settings.get('api_key' if service_type == 'deepgram' else 'openai_api_key', '')
+            
+            self.service = create_service(service_type, api_key)
+            
+            # Update service label
+            self.service_label.configure(text=f"({service_type.capitalize()})")
+            
+            self.status_label.configure(
+                text=f"Settings updated, using {service_type.capitalize()} service",
+                text_color="green"
+            )
+        except Exception as e:
+            self.status_label.configure(
+                text=f"Error applying settings: {str(e)}",
+                text_color="red"
+            )
 
     def run(self):
         self.root.mainloop()
