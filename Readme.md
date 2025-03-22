@@ -7,6 +7,7 @@ Alternative to Mac Whisper, Voice Access, and other voice typing tools.
 ## Features
 - Real-time speech-to-text transcription
 - Multiple speech recognition services (Deepgram and OpenAI)
+- Multiple language support with easy language selection
 - Automatic text insertion at cursor position
 - Keyboard shortcut support (F2)
 - Transcription logging
@@ -60,6 +61,7 @@ python main.py
 - The transcribed text will appear in the window and be typed at your cursor position
 - All transcriptions are logged in transcribe.log
 - Switch between Deepgram and OpenAI in the settings dialog
+- Select your preferred language in the settings dialog
 
 ## Supported Services
 
@@ -70,8 +72,25 @@ python main.py
 
 ### OpenAI (Whisper)
 - State-of-the-art accuracy
-- Wide language support
+- Wide language support (15+ languages)
 - Enhanced contextual understanding
+
+## Supported Languages
+
+The application supports many languages including:
+- English
+- German (Deutsch)
+- French (Français)
+- Spanish (Español)
+- Italian (Italiano)
+- Japanese (日本語)
+- Chinese (中文)
+- Russian (Русский)
+- Portuguese (Português)
+- Korean (한국어)
+- And more!
+
+You can also use Auto-detect mode to let the service determine the language automatically.
 
 ## Support
 If you find this tool helpful, you can support the development by:

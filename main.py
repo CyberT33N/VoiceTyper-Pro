@@ -15,7 +15,8 @@ import asyncio
 import pystray
 import json
 from deepgram.errors import DeepgramSetupError
-from speech_to_text import create_service, DeepgramService, OpenAIService
+from speech_to_text import create_service, DeepgramService, OpenAIService, SpeechToTextService
+import sys
 
 # Set theme and color scheme
 ctk.set_appearance_mode("dark")
@@ -56,7 +57,7 @@ class SettingsDialog:
     def __init__(self, parent):
         self.dialog = ctk.CTkToplevel(parent)
         self.dialog.title("Settings")
-        self.dialog.geometry("400x350")
+        self.dialog.geometry("400x450")
         self.dialog.transient(parent)
         self.dialog.resizable(False, False)
         
@@ -95,6 +96,36 @@ class SettingsDialog:
             command=self.update_api_visibility
         )
         self.openai_radio.pack(anchor="w", pady=5, padx=10)
+        
+        # Language selection frame
+        self.language_frame = ctk.CTkFrame(self.dialog)
+        self.language_frame.pack(fill="x", padx=20, pady=10)
+        
+        self.language_label = ctk.CTkLabel(
+            self.language_frame, 
+            text="Language:",
+            font=ctk.CTkFont(size=14)
+        )
+        self.language_label.pack(anchor="w", pady=5)
+        
+        # Get supported languages from service class
+        self.languages = SpeechToTextService.get_supported_languages()
+        
+        # Create the dropdown for language selection
+        self.language_var = ctk.StringVar(value=self.settings.get('language', 'auto'))
+        
+        self.language_menu = ctk.CTkOptionMenu(
+            self.language_frame,
+            values=list(self.languages.keys()),
+            command=self.on_language_change,
+            variable=self.language_var,
+            dynamic_resizing=False,
+            width=200
+        )
+        self.language_menu.pack(pady=5)
+        
+        # Set the initial display value to show the language name, not code
+        self.update_language_display()
         
         # Deepgram API Key input
         self.deepgram_frame = ctk.CTkFrame(self.dialog)
@@ -145,6 +176,16 @@ class SettingsDialog:
         
         # Set initial visibility based on selected service
         self.update_api_visibility()
+    
+    def update_language_display(self):
+        # Update the displayed value in the dropdown to show language name instead of code
+        current_lang_code = self.language_var.get()
+        # Custom handling for the OptionMenu to display the language name
+        self.language_menu.set(self.languages.get(current_lang_code, current_lang_code))
+    
+    def on_language_change(self, selection):
+        # Convert displayed language name back to language code when user selects
+        self.language_var.set(selection)
         
     def update_api_visibility(self):
         service = self.service_var.get()
@@ -159,6 +200,7 @@ class SettingsDialog:
         self.settings['service'] = self.service_var.get()
         self.settings['api_key'] = self.deepgram_entry.get()
         self.settings['openai_api_key'] = self.openai_entry.get()
+        self.settings['language'] = self.language_var.get()
         with open('settings.json', 'w') as f:
             json.dump(self.settings, f)
         self.dialog.destroy()
@@ -208,14 +250,14 @@ class VoiceTyperApp:
     def show_api_key_error(self, error_message="Invalid API Key detected"):
         error_dialog = ctk.CTkToplevel(self.root)
         error_dialog.title("API Key Error")
-        error_dialog.geometry("400x250")
+        error_dialog.geometry("400x350")
         error_dialog.transient(self.root)
         error_dialog.resizable(False, False)
         
         # Center the dialog
         error_dialog.geometry("+%d+%d" % (
             self.root.winfo_x() + (self.root.winfo_width() - 400) // 2,
-            self.root.winfo_y() + (self.root.winfo_height() - 250) // 2
+            self.root.winfo_y() + (self.root.winfo_height() - 350) // 2
         ))
         
         # Error message
@@ -249,6 +291,32 @@ class VoiceTyperApp:
         )
         openai_radio.pack(anchor="w", pady=5)
         
+        # Language selection
+        language_frame = ctk.CTkFrame(error_dialog)
+        language_frame.pack(fill="x", padx=20, pady=5)
+        
+        language_label = ctk.CTkLabel(
+            language_frame,
+            text="Language:",
+            font=ctk.CTkFont(size=14)
+        )
+        language_label.pack(anchor="w", pady=5)
+        
+        # Get supported languages
+        languages = SpeechToTextService.get_supported_languages()
+        
+        # Create dropdown for language selection
+        language_var = ctk.StringVar(value=self.settings.get('language', 'auto'))
+        
+        language_options = list(languages.keys())
+        language_menu = ctk.CTkOptionMenu(
+            language_frame,
+            values=language_options,
+            variable=language_var,
+            width=200
+        )
+        language_menu.pack(pady=5)
+        
         # API Key input
         api_entry = ctk.CTkEntry(
             error_dialog,
@@ -275,6 +343,7 @@ class VoiceTyperApp:
         def save_and_retry():
             new_key = api_entry.get()
             selected_service = service_var.get()
+            selected_language = language_var.get()
             try:
                 # Try to initialize selected service with new key
                 if selected_service == "deepgram":
@@ -285,6 +354,9 @@ class VoiceTyperApp:
                     self.settings['openai_api_key'] = new_key
                     self.settings['service'] = selected_service
                     self.service = create_service(selected_service, new_key)
+                
+                # Save language setting
+                self.settings['language'] = selected_language
                 
                 # If successful, save the new settings
                 with open('settings.json', 'w') as f:
@@ -357,9 +429,12 @@ class VoiceTyperApp:
         
         # Service indicator
         service_type = self.settings.get('service', 'deepgram').capitalize()
+        language_code = self.settings.get('language', 'auto')
+        language_name = SpeechToTextService.get_supported_languages().get(language_code, language_code)
+        
         self.service_label = ctk.CTkLabel(
             self.header_frame,
-            text=f"({service_type})",
+            text=f"({service_type} - {language_name})",
             font=ctk.CTkFont(size=12, slant="italic")
         )
         self.service_label.pack(side="left", padx=5)
@@ -575,7 +650,24 @@ class VoiceTyperApp:
                 i += 1
                 
             except Exception as e:
-                self.status_label.configure(text=f"Error: {str(e)}")
+                error_msg = str(e)
+                print(f"Transcription error: {error_msg}", file=sys.stderr)
+                
+                # Make sure the error message is visible in the UI
+                self.status_label.configure(
+                    text=f"Error: {error_msg[:50]}..." if len(error_msg) > 50 else f"Error: {error_msg}",
+                    text_color="red"
+                )
+                
+                # Also log the error to the transcription text area
+                self.transcription_text.insert('1.0', f"{datetime.now().strftime('%H:%M:%S')}: ❌ Error: {error_msg}\n\n")
+                
+                # Try to remove the audio file
+                try:
+                    os.remove(audio_file)
+                except:
+                    pass
+                    
                 i += 1
 
     def __del__(self):
@@ -659,14 +751,16 @@ class VoiceTyperApp:
                 
             service_type = self.settings.get('service', 'deepgram')
             api_key = self.settings.get('api_key' if service_type == 'deepgram' else 'openai_api_key', '')
+            language_code = self.settings.get('language', 'auto')
+            language_name = SpeechToTextService.get_supported_languages().get(language_code, language_code)
             
             self.service = create_service(service_type, api_key)
             
             # Update service label
-            self.service_label.configure(text=f"({service_type.capitalize()})")
+            self.service_label.configure(text=f"({service_type.capitalize()} - {language_name})")
             
             self.status_label.configure(
-                text=f"Settings updated, using {service_type.capitalize()} service",
+                text=f"Settings updated, using {service_type.capitalize()} service with {language_name} language",
                 text_color="green"
             )
         except Exception as e:
