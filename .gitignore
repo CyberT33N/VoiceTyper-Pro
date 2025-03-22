@@ -1,0 +1,5 @@
+/venv
+settings.json
+transcribe.log
+__pycache__
+*.wav

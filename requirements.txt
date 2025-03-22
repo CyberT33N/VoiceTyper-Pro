@@ -7,3 +7,4 @@ python-dotenv
 customtkinter
 pillow
 pystray
+openai>=1.0.0
