@@ -1002,19 +1002,32 @@ class VoiceTyperApp:
                 with codecs.open('transcribe.log', 'a', encoding='utf-8') as f:
                     f.write(f"{datetime.now()}: {transcript}\n")
                     
-                # COMPLETELY NEW METHOD: Use clipboard instead of direct typing
+                # IMPROVED CLIPBOARD METHOD: Save previous clipboard content, then restore after pasting
                 try:
-                    # Copy to clipboard
+                    # Save current clipboard content
+                    try:
+                        previous_clipboard = self.root.clipboard_get()
+                    except:
+                        previous_clipboard = ""  # Empty if no content or error
+                    
+                    # Copy transcribed text to clipboard
                     self.root.clipboard_clear()
                     self.root.clipboard_append(transcript)
                     
                     # Brief pause to ensure clipboard is set
                     time.sleep(0.2)
                     
-                    # Simulate Ctrl+V (or Command+V on Mac)
+                    # Simulate Ctrl+V to paste
                     with self.pykeyboard.pressed(keyboard.Key.ctrl):
                         self.pykeyboard.press('v')
                         self.pykeyboard.release('v')
+                    
+                    # Brief pause before restoring clipboard
+                    time.sleep(0.2)
+                    
+                    # Restore previous clipboard content
+                    self.root.clipboard_clear()
+                    self.root.clipboard_append(previous_clipboard)
                     
                 except Exception as e:
                     print(f"Error with clipboard operation: {str(e)}")
