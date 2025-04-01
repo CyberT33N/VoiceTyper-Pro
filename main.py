@@ -406,6 +406,8 @@ class VoiceTyperApp:
         self.pykeyboard = keyboard.Controller()
         self.recording_animation_active = False
         self.service = None
+        self.transcription_thread_started = False
+        self.transcription_thread_running = True  # Flag to control the transcription thread loop
         
         # Try to load settings and initialize Speech-to-Text service
         try:
@@ -432,7 +434,6 @@ class VoiceTyperApp:
         self.keyboard_listener.start()
         
         self.setup_ui()
-        self.start_transcription_thread()
         
     def show_api_key_error(self, error_message="Invalid API Key detected"):
         error_dialog = ctk.CTkToplevel(self.root)
@@ -857,6 +858,11 @@ class VoiceTyperApp:
             return
             
         if not self.is_recording:
+            # Start the transcription thread if it's not already started
+            if not self.transcription_thread_started:
+                self.start_transcription_thread()
+                self.transcription_thread_started = True
+                
             self.start_recording()
             # Start animation with pulsing effect
             self.recording_animation_active = True
@@ -954,16 +960,26 @@ class VoiceTyperApp:
             raise Exception(f"Transcription error: {str(e)}")
             
     def start_transcription_thread(self):
-        threading.Thread(target=self.transcribe_speech).start()
+        self.transcription_thread_running = True  # Ensure flag is set to True when starting
+        threading.Thread(target=self.transcribe_speech, daemon=True).start()
         
     def transcribe_speech(self):
         i = 1
         
-        while True:
-            while self.file_ready_counter < i:
+        while self.transcription_thread_running:  # Use the flag to control the loop
+            while self.file_ready_counter < i and self.transcription_thread_running:
                 time.sleep(0.01)
                 
+            if not self.transcription_thread_running:  # Check if we should exit
+                break
+                
             audio_file = f"test{i}.wav"
+            
+            # Check if the file exists before trying to transcribe it
+            if not os.path.exists(audio_file):
+                i += 1
+                continue
+                
             try:
                 transcript = asyncio.run(self.transcribe_audio(audio_file))
                 
@@ -1008,6 +1024,9 @@ class VoiceTyperApp:
                 i += 1
 
     def __del__(self):
+        # Stop the transcription thread
+        self.transcription_thread_running = False
+        
         # Clean up keyboard listener
         if hasattr(self, 'keyboard_listener'):
             self.keyboard_listener.stop()
@@ -1113,6 +1132,9 @@ class VoiceTyperApp:
         self.root.after(0, self.root.deiconify)
         
     def quit_app(self):
+        # Stop the transcription thread
+        self.transcription_thread_running = False
+        
         self.tray_icon.stop()
         self.root.quit()
 
