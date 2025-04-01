@@ -35,6 +35,13 @@ TEXT_SECONDARY = "#B0B9D1"
 GRADIENT_START = "#8A63FF"
 GRADIENT_END = "#36D7B7"
 
+# Debug-Flag zum Speichern der Audio-Dateien
+DEBUG_KEEP_AUDIO = False
+DEBUG_AUDIO_DIR = "tmp"
+
+# Additional imports for clipboard functionality
+import tkinter as tk
+
 # Simple alternative to playsound
 def play_sound(sound_file):
     try:
@@ -408,6 +415,10 @@ class VoiceTyperApp:
         self.service = None
         self.transcription_thread_started = False
         self.transcription_thread_running = True  # Flag to control the transcription thread loop
+        
+        # Ensure tmp directory exists if debug mode is enabled
+        if DEBUG_KEEP_AUDIO:
+            os.makedirs(DEBUG_AUDIO_DIR, exist_ok=True)
         
         # Try to load settings and initialize Speech-to-Text service
         try:
@@ -991,15 +1002,34 @@ class VoiceTyperApp:
                 with codecs.open('transcribe.log', 'a', encoding='utf-8') as f:
                     f.write(f"{datetime.now()}: {transcript}\n")
                     
-                # Type the text
-                for element in transcript:
-                    try:
-                        self.pykeyboard.type(element)
-                        time.sleep(0.0025)
-                    except:
-                        print("empty or unknown symbol")
-                        
-                os.remove(audio_file)
+                # COMPLETELY NEW METHOD: Use clipboard instead of direct typing
+                try:
+                    # Copy to clipboard
+                    self.root.clipboard_clear()
+                    self.root.clipboard_append(transcript)
+                    
+                    # Brief pause to ensure clipboard is set
+                    time.sleep(0.2)
+                    
+                    # Simulate Ctrl+V (or Command+V on Mac)
+                    with self.pykeyboard.pressed(keyboard.Key.ctrl):
+                        self.pykeyboard.press('v')
+                        self.pykeyboard.release('v')
+                    
+                except Exception as e:
+                    print(f"Error with clipboard operation: {str(e)}")
+                
+                # Entweder Datei löschen oder in tmp-Ordner verschieben
+                if DEBUG_KEEP_AUDIO:
+                    # Verschiebe die Audiodatei in den tmp-Ordner mit Zeitstempel
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    new_filename = f"{DEBUG_AUDIO_DIR}/audio_{timestamp}_{i}.wav"
+                    os.rename(audio_file, new_filename)
+                    print(f"Saved audio file to {new_filename}")
+                else:
+                    # Datei löschen (Standardverhalten)
+                    os.remove(audio_file)
+                
                 i += 1
                 
             except Exception as e:
@@ -1015,9 +1045,16 @@ class VoiceTyperApp:
                 # Also log the error to the transcription text area
                 self.transcription_text.insert('1.0', f"{datetime.now().strftime('%H:%M:%S')}: ❌ Error: {error_msg}\n\n")
                 
-                # Try to remove the audio file
+                # Try to remove the audio file if not in debug mode
                 try:
-                    os.remove(audio_file)
+                    if not DEBUG_KEEP_AUDIO:
+                        os.remove(audio_file)
+                    else:
+                        # Move to tmp with error indicator
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        new_filename = f"{DEBUG_AUDIO_DIR}/error_{timestamp}_{i}.wav"
+                        os.rename(audio_file, new_filename)
+                        print(f"Saved error audio file to {new_filename}")
                 except:
                     pass
                     
