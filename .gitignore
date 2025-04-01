@@ -4,3 +4,4 @@ transcribe.log
 __pycache__
 *.wav
 /screenshots
+/.specstory
