@@ -1081,33 +1081,84 @@ class VoiceTyperApp:
                     
                 # IMPROVED CLIPBOARD METHOD: Save previous clipboard content, then restore after pasting
                 try:
+                    print(f"📋 DEBUG: Starting clipboard operation for text: '{transcript[:50]}{'...' if len(transcript) > 50 else ''}'", file=sys.stderr)
+                    
                     # Save current clipboard content
                     try:
                         previous_clipboard = self.root.clipboard_get()
-                    except:
+                        print(f"📋 DEBUG: Saved previous clipboard content: '{previous_clipboard[:50]}{'...' if len(previous_clipboard) > 50 else ''}'", file=sys.stderr)
+                    except Exception as clip_error:
                         previous_clipboard = ""  # Empty if no content or error
+                        print(f"📋 DEBUG: No previous clipboard content or error: {str(clip_error)}", file=sys.stderr)
                     
-                    # Copy transcribed text to clipboard
-                    self.root.clipboard_clear()
-                    self.root.clipboard_append(transcript)
+                    # Copy transcribed text to clipboard with multiple attempts if needed
+                    max_attempts = 3
+                    for attempt in range(1, max_attempts + 1):
+                        print(f"📋 DEBUG: Setting clipboard content (attempt {attempt}/{max_attempts})", file=sys.stderr)
+                        self.root.clipboard_clear()
+                        self.root.clipboard_append(transcript)
+                        self.root.update()  # Force tkinter to update clipboard
+                        
+                        # Increased pause to ensure clipboard is set
+                        time.sleep(0.3)
+                        
+                        # Verify clipboard content
+                        try:
+                            current_clipboard = self.root.clipboard_get()
+                            if current_clipboard == transcript:
+                                print(f"✅ DEBUG: Clipboard content verified successfully (attempt {attempt})", file=sys.stderr)
+                                break
+                            else:
+                                print(f"⚠️ WARNING: Clipboard content doesn't match transcript (attempt {attempt})", file=sys.stderr)
+                                if attempt == max_attempts:
+                                    print(f"❌ ERROR: Failed to set clipboard content after {max_attempts} attempts", file=sys.stderr)
+                                # Try again with longer wait time
+                                time.sleep(0.3 * attempt)
+                        except Exception as verify_error:
+                            print(f"⚠️ ERROR: Failed to verify clipboard content: {str(verify_error)}", file=sys.stderr)
+                            time.sleep(0.3 * attempt)
                     
-                    # Brief pause to ensure clipboard is set
-                    time.sleep(0.2)
+                    # Simulate Ctrl+V to paste with more time for applications to respond
+                    print(f"📋 DEBUG: Simulating Ctrl+V keystroke", file=sys.stderr)
+                    time.sleep(0.5)  # Extra delay before keystroke
                     
-                    # Simulate Ctrl+V to paste
-                    with self.pykeyboard.pressed(keyboard.Key.ctrl):
-                        self.pykeyboard.press('v')
-                        self.pykeyboard.release('v')
+                    # Multiple attempts for key press if needed
+                    key_press_attempts = 2
+                    for key_attempt in range(1, key_press_attempts + 1):
+                        try:
+                            print(f"🔤 DEBUG: Sending Ctrl+V keystroke (attempt {key_attempt}/{key_press_attempts})", file=sys.stderr)
+                            with self.pykeyboard.pressed(keyboard.Key.ctrl):
+                                time.sleep(0.1)  # Small pause with Ctrl held down
+                                self.pykeyboard.press('v')
+                                time.sleep(0.1)  # Small pause before releasing
+                                self.pykeyboard.release('v')
+                            
+                            # If we're on the last attempt, add extra delay
+                            if key_attempt == key_press_attempts:
+                                time.sleep(0.5)
+                            else:
+                                time.sleep(0.3)
+                                
+                            break  # If no exception, we're done
+                        except Exception as key_error:
+                            print(f"⚠️ ERROR: Key press failed: {str(key_error)}", file=sys.stderr)
+                            if key_attempt < key_press_attempts:
+                                time.sleep(0.5)  # Wait before trying again
                     
-                    # Brief pause before restoring clipboard
-                    time.sleep(0.2)
+                    # Increased pause before restoring clipboard to ensure paste completes
+                    print(f"📋 DEBUG: Waiting after paste operation (0.5s)", file=sys.stderr)
+                    time.sleep(0.5)
                     
                     # Restore previous clipboard content
+                    print(f"📋 DEBUG: Restoring previous clipboard content", file=sys.stderr)
                     self.root.clipboard_clear()
                     self.root.clipboard_append(previous_clipboard)
+                    self.root.update()  # Force tkinter to update clipboard
+                    print(f"✅ DEBUG: Clipboard operation completed successfully", file=sys.stderr)
                     
                 except Exception as e:
-                    print(f"Error with clipboard operation: {str(e)}")
+                    print(f"❌ ERROR: Clipboard operation failed: {str(e)}", file=sys.stderr)
+                    print(f"❌ ERROR occurred at line: {sys.exc_info()[2].tb_lineno}", file=sys.stderr)
                 
                 # Entweder Datei löschen oder in tmp-Ordner verschieben
                 if DEBUG_KEEP_AUDIO:
