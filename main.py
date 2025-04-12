@@ -223,9 +223,37 @@ class SettingsDialog:
             variable=self.post_processing_var,
             fg_color=ACCENT_PRIMARY,
             text_color=TEXT_PRIMARY,
-            hover_color=ACCENT_SECONDARY
+            hover_color=ACCENT_SECONDARY,
+            command=self.update_llm_checkbox_state
         )
         self.post_processing_checkbox.pack(anchor="w", pady=5, padx=20)
+        
+        # LLM Optimization option (depends on post-processing)
+        self.llm_optimized_var = ctk.BooleanVar(value=self.settings.get('llm_optimized', False))
+        
+        self.llm_optimized_info = ctk.CTkLabel(
+            self.post_processing_frame,
+            text="Optimize output for better compatibility with LLMs.\nFormatting includes Markdown and better structure.",
+            font=ctk.CTkFont(size=12),
+            wraplength=350,
+            justify="left",
+            text_color=TEXT_SECONDARY
+        )
+        self.llm_optimized_info.pack(anchor="w", pady=5, padx=10)
+        
+        self.llm_optimized_checkbox = ctk.CTkCheckBox(
+            self.post_processing_frame,
+            text="Enable LLM-Optimized Output (requires Post-Processing)",
+            variable=self.llm_optimized_var,
+            fg_color=ACCENT_PRIMARY,
+            text_color=TEXT_PRIMARY,
+            hover_color=ACCENT_SECONDARY,
+            command=self.update_post_processing_if_needed
+        )
+        self.llm_optimized_checkbox.pack(anchor="w", pady=5, padx=20)
+        
+        # Initialize the state of the LLM checkbox based on post-processing state
+        self.update_llm_checkbox_state()
         
         # Deepgram API Key input
         self.deepgram_frame = ctk.CTkFrame(self.container, fg_color=GRADIENT_BG_LIGHT, corner_radius=10)
@@ -324,9 +352,11 @@ class SettingsDialog:
             if service_type == "deepgram":
                 api_key = self.deepgram_entry.get()
                 post_processing = False
+                llm_optimized = False
             else:
                 api_key = self.openai_entry.get()
                 post_processing = self.post_processing_var.get()
+                llm_optimized = self.llm_optimized_var.get()
                 
             language = self.language_var.get()
             
@@ -335,14 +365,22 @@ class SettingsDialog:
                 self.status_label.configure(text="Please enter an API key", text_color="red")
                 return
                 
+            # Log the actual settings being used for the test
+            print(f"Test settings: service={service_type}, post_processing={post_processing}, llm_optimized={llm_optimized}", file=sys.stderr)
+                
             # Create service
-            service = create_service(service_type, api_key, post_processing)
+            service = create_service(service_type, api_key, post_processing, llm_optimized)
             
             self.status_label.configure(text=f"Testing {service_type.capitalize()}...", text_color="black")
             self.dialog.update()
             
             # Just do a quick test to see if service initializes properly
-            post_process_text = " with GPT-4 post-processing" if post_processing and service_type == "openai" else ""
+            post_process_text = ""
+            if post_processing and service_type == "openai":
+                post_process_text = " with GPT-4 post-processing"
+                if llm_optimized:
+                    post_process_text += " (LLM-optimized)"
+                    
             self.status_label.configure(
                 text=f"{service_type.capitalize()} service initialized successfully{post_process_text}",
                 text_color="green"
@@ -386,6 +424,7 @@ class SettingsDialog:
         self.settings['openai_api_key'] = self.openai_entry.get()
         self.settings['language'] = self.language_var.get()
         self.settings['post_processing'] = self.post_processing_var.get()
+        self.settings['llm_optimized'] = self.llm_optimized_var.get()
         with open('settings.json', 'w') as f:
             json.dump(self.settings, f)
         self.dialog.destroy()
@@ -398,6 +437,19 @@ class SettingsDialog:
             # Try again later
             self.dialog.after(100, self.make_modal)
 
+    def update_llm_checkbox_state(self):
+        # Disable LLM optimization if post-processing is disabled
+        if not self.post_processing_var.get():
+            self.llm_optimized_var.set(False)
+            self.llm_optimized_checkbox.configure(state="disabled")
+        else:
+            self.llm_optimized_checkbox.configure(state="normal")
+
+    def update_post_processing_if_needed(self):
+        # If LLM optimization is enabled, make sure post-processing is also enabled
+        if self.llm_optimized_var.get():
+            self.post_processing_var.set(True)
+            
 class VoiceTyperApp:
     def __init__(self):
         self.root = ctk.CTk()
@@ -611,10 +663,17 @@ class VoiceTyperApp:
                 self.settings['api_key'] = new_key
                 self.settings['service'] = 'deepgram'
                 self.settings['post_processing'] = False
+                self.settings['llm_optimized'] = False
             else:
                 self.settings['openai_api_key'] = new_key
                 self.settings['service'] = 'openai'
                 self.settings['post_processing'] = post_processing_var.get()
+                
+                # Wir können llm_optimized nur aktivieren, wenn auch post_processing aktiv ist
+                if post_processing_var.get():
+                    self.settings['llm_optimized'] = self.settings.get('llm_optimized', False)
+                else:
+                    self.settings['llm_optimized'] = False
                 
             self.settings['language'] = language_var.get()
             
@@ -694,9 +753,10 @@ class VoiceTyperApp:
         service_type = self.settings.get('service', 'deepgram')
         api_key = self.settings.get('api_key' if service_type == 'deepgram' else 'openai_api_key', '')
         post_processing = self.settings.get('post_processing', False)
+        llm_optimized = self.settings.get('llm_optimized', False)
         
         try:
-            self.service = create_service(service_type, api_key, post_processing)
+            self.service = create_service(service_type, api_key, post_processing, llm_optimized)
         except ValueError as ve:
             raise ValueError(f"Invalid {service_type.capitalize()} API Key")
         except Exception as e:
@@ -953,19 +1013,35 @@ class VoiceTyperApp:
             # Get language from settings, default to English
             language = self.settings.get('language', 'en')
             post_processing = self.settings.get('post_processing', False)
+            llm_optimized = self.settings.get('llm_optimized', False)
+            
+            # Debug-Info drucken, um Werte zu verifizieren
+            print(f"DEBUG transcribe_audio: post_processing={post_processing}, llm_optimized={llm_optimized}", file=sys.stderr)
             
             # Log the transcription process
             service_type = self.settings.get('service', 'deepgram').capitalize()
-            if service_type == "Openai" and post_processing:
-                print(f"Starting transcription with {service_type} (GPT-4 post-processing enabled) for language: {language}")
+            if service_type == "Openai":
+                if post_processing and llm_optimized:
+                    print(f"Starting transcription with {service_type} (GPT-4 post-processing with LLM optimization) for language: {language}")
+                elif post_processing:
+                    print(f"Starting transcription with {service_type} (GPT-4 post-processing enabled) for language: {language}")
+                else:
+                    print(f"Starting transcription with {service_type} for language: {language}")
             else:
                 print(f"Starting transcription with {service_type} for language: {language}")
+                
+            # Verifiziere, dass der Service die korrekten Parameter hat
+            if service_type.lower() == "openai" and hasattr(self.service, 'llm_optimized'):
+                print(f"DEBUG: Service Configuration: post_processing={self.service.use_post_processing}, llm_optimized={self.service.llm_optimized}", file=sys.stderr)
                 
             transcript = await self.service.transcribe_audio(audio_file, language)
             
             # Log completion
             if service_type == "Openai" and post_processing:
-                print(f"✓ Completed {service_type} transcription with GPT-4 post-processing")
+                if llm_optimized:
+                    print(f"✓ Completed {service_type} transcription with GPT-4 post-processing and LLM optimization")
+                else:
+                    print(f"✓ Completed {service_type} transcription with GPT-4 post-processing")
                 
             return transcript
         except Exception as e:
@@ -1202,30 +1278,32 @@ class VoiceTyperApp:
                 
                 # Reload settings and update UI
                 try:
-                    old_service = self.settings.get('service', 'deepgram')
-                    old_language = self.settings.get('language', 'auto')
-                    old_post_processing = self.settings.get('post_processing', False)
+                    # Speichere alte Einstellungswerte, um später zu prüfen, ob sich etwas geändert hat
+                    old_settings = self.settings.copy() if hasattr(self, 'settings') else {}
                     
                     # Reload settings from file
                     with open('settings.json', 'r') as f:
                         self.settings = json.load(f)
                     
-                    # Check if service or language changed
-                    new_service = self.settings.get('service', 'deepgram')
-                    new_language = self.settings.get('language', 'auto')
-                    new_post_processing = self.settings.get('post_processing', False)
+                    # Prüfe, ob sich relevante Einstellungen geändert haben
+                    settings_changed = False
+                    for key in ['service', 'language', 'post_processing', 'llm_optimized', 'api_key', 'openai_api_key']:
+                        if old_settings.get(key) != self.settings.get(key):
+                            settings_changed = True
+                            break
                     
-                    if (old_service != new_service or 
-                        old_language != new_language or 
-                        old_post_processing != new_post_processing):
-                        
-                        # Update service with new settings
+                    if settings_changed:
+                        # Aktualisiere Service mit neuen Einstellungen - IMMER neu initialisieren bei Änderungen
                         try:
                             self.load_settings()
                             
                             # Update service indicator
                             service_type = self.settings.get('service', 'deepgram').capitalize()
-                            post_process_text = " + GPT-4" if new_post_processing and new_service == "openai" else ""
+                            post_process_text = ""
+                            if self.settings.get('post_processing', False) and self.settings.get('service') == "openai":
+                                post_process_text = " + GPT-4"
+                                if self.settings.get('llm_optimized', False):
+                                    post_process_text += " (LLM-Opt)"
                             language_code = self.settings.get('language', 'auto')
                             language_name = SpeechToTextService.get_supported_languages().get(language_code, language_code)
                             
@@ -1236,6 +1314,10 @@ class VoiceTyperApp:
                                 text=f"Settings updated successfully", 
                                 text_color=ACCENT_SECONDARY
                             )
+                            
+                            # Debugging-Log
+                            print(f"Service neu initialisiert mit: post_processing={self.settings.get('post_processing', False)}, llm_optimized={self.settings.get('llm_optimized', False)}", file=sys.stderr)
+                            
                         except Exception as e:
                             self.status_label.configure(
                                 text=f"Error updating settings: {str(e)}", 
