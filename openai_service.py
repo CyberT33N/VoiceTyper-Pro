@@ -121,7 +121,12 @@ class OpenAIService:
             if self.llm_optimized:
                 print(f"📋 LLM-Optimization: Aktiviert - Text wird mit Markdown und für LLMs optimiert", file=sys.stderr)
                 print(f"ℹ️ LLM-Optimierung wird Formatierung, Struktur und Lesbarkeit für LLMs verbessern", file=sys.stderr)
+                print(f"🔍 LLM-Interaktionserkennung: Aktiviert - Direkte Anfragen werden erkannt und verarbeitet", file=sys.stderr)
             print(f"Original transcript: '{transcript}'", file=sys.stderr)
+            
+            # Prüfen, ob der Transcript eine direkte LLM-Anfrage enthält (für Logs)
+            if self.llm_optimized and re.search(r"(hey|hallo|hi)\s+llm", transcript, re.IGNORECASE):
+                print(f"👋 Direkte LLM-Anfrage erkannt: Wird speziell verarbeitet", file=sys.stderr)
             
             response = await loop.run_in_executor(
                 None,
@@ -144,6 +149,10 @@ class OpenAIService:
             processed_text = response.choices[0].message.content
             print(f"✅ GPT-4 post-processing complete", file=sys.stderr)
             print(f"🧠 Text after GPT-4: '{processed_text}'", file=sys.stderr)
+            
+            # Prüfen, ob die Antwort eine Trennung enthält (für Logs)
+            if self.llm_optimized and "---" in processed_text:
+                print(f"🔀 Antwort enthält Trennung zwischen Original und LLM-Antwort", file=sys.stderr)
             
             # Check if the GPT-4 processed text contains V-Test (debug)
             if language == "de" and re.search(r"v[-\s]tests?", processed_text, re.IGNORECASE):
@@ -177,6 +186,10 @@ class OpenAIService:
             # Add explicit clarification of what mode was used
             if self.llm_optimized:
                 print(f"🔍 MODUS: GPT-4 mit LLM-OPTIMIERUNG wurde angewendet", file=sys.stderr)
+                
+                # Zusätzliche Info, wenn direkte LLM-Anfrage erkannt wurde
+                if "---" in final_text:
+                    print(f"🤖 Direkte LLM-Anfrage wurde beantwortet", file=sys.stderr)
             else:
                 print(f"🔍 MODUS: Standard GPT-4 Post-Processing wurde angewendet", file=sys.stderr)
                 
