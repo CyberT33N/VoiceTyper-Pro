@@ -1,6 +1,7 @@
 import os
 import sys
 import asyncio
+import re # Import re for regex substitutions
 from openai import OpenAI
 
 class OpenAIService:
@@ -9,6 +10,22 @@ class OpenAIService:
     def __init__(self, client, use_post_processing=False):
         self.client = client
         self.use_post_processing = use_post_processing
+        # Define German word replacements as a class attribute
+        self.german_word_replacements = {
+            "v-test": "Vitest",
+            "v-tests": "Vitest",
+            "package jason": "package.json",
+            "achse": ".exe",
+            "echse": ".exe",
+            "gyra": "Jira",
+            "effektor": "Refactor",
+            "pulverquest": "Pull Request",
+            "konsole locks": "console.log",
+            "juju-id": "UUID",
+            "loks": "Logs",
+            "locken": "loggen",
+            "commentline": "Command Line"
+        }
     
     @classmethod
     def initialize(cls, api_key, use_post_processing=False):
@@ -47,13 +64,18 @@ class OpenAIService:
                 )
                 
                 transcript = transcription.text
-                print(f"📝 Initial transcription: '{transcript[:50]}...'", file=sys.stderr)
+                # Log the full initial transcript
+                print(f"📝 Initial transcription: '{transcript}'", file=sys.stderr)
                 
                 # Apply post-processing if enabled
                 if self.use_post_processing and transcript:
-                    print("⏳ Applying GPT-4 post-processing to improve quality...", file=sys.stderr)
+                    print(f"⏳ Applying GPT-4 post-processing to improve quality... (language={language})", file=sys.stderr)
+                    print(f"📊 DEBUG: Post-processing is enabled = {self.use_post_processing}", file=sys.stderr)
                     processed_transcript = await self.post_process_with_gpt4(transcript, language)
+                    print(f"🏁 FINAL RESULT: '{processed_transcript}'", file=sys.stderr)
                     return processed_transcript
+                else:
+                    print(f"⚠️ No post-processing applied! use_post_processing={self.use_post_processing}", file=sys.stderr)
                 
                 return transcript
         except Exception as e:
@@ -65,11 +87,14 @@ class OpenAIService:
         try:
             loop = asyncio.get_event_loop()
             
+            # Log language parameter
+            print(f"🚩 DEBUG: post_process_with_gpt4 called with language='{language}'", file=sys.stderr)
+            
             # Create a system prompt based on language
             system_prompt = self._get_system_prompt_for_language(language)
             
             print(f"🧠 Starting GPT-4 post-processing for transcript...", file=sys.stderr)
-            print(f"Original transcript: '{transcript[:50]}...'", file=sys.stderr)
+            print(f"Original transcript: '{transcript}'", file=sys.stderr)
             
             response = await loop.run_in_executor(
                 None,
@@ -91,10 +116,42 @@ class OpenAIService:
             
             processed_text = response.choices[0].message.content
             print(f"✅ GPT-4 post-processing complete", file=sys.stderr)
-            print(f"Improved transcript: '{processed_text[:50]}...'", file=sys.stderr)
-            return processed_text
+            print(f"🧠 Text after GPT-4: '{processed_text}'", file=sys.stderr)
+            
+            # Check if the GPT-4 processed text contains V-Test (debug)
+            if re.search(r"v[-\s]tests?", processed_text, re.IGNORECASE):
+                print(f"✓✓✓ DEBUG: Found 'V-Test' or variant in GPT-4 processed text!", file=sys.stderr)
+            else:
+                print(f"❌❌❌ DEBUG: 'V-Test' pattern NOT found in GPT-4 processed text!", file=sys.stderr)
+            
+            # Apply explicit German word replacements if language is German
+            final_text = processed_text
+            if language == "de":
+                print(f"⚙️ Applying explicit German word replacements... (language confirmed as 'de')", file=sys.stderr)
+                final_text = self._apply_german_word_replacements(processed_text)
+                
+                # Check if there was any difference
+                if final_text != processed_text:
+                    print(f"✓ Replacements applied successfully", file=sys.stderr)
+                else:
+                    print(f"⚠️ No replacements were applied", file=sys.stderr)
+                    
+                print(f"🔧 Text after explicit replacements: '{final_text}'", file=sys.stderr)
+                
+                # Final check for V-Test (debug)
+                if re.search(r"v[-\s]tests?", final_text, re.IGNORECASE):
+                    print(f"❌❌❌ ERROR: 'V-Test' pattern STILL in final text!", file=sys.stderr)
+                else:
+                    print(f"✓✓✓ SUCCESS: 'V-Test' pattern properly replaced in final text!", file=sys.stderr)
+            else:
+                print(f"⚠️ WARNING: Language is '{language}', not 'de'. German replacements NOT applied!", file=sys.stderr)
+            
+            # Log the full processed text
+            print(f"Improved transcript: '{final_text}'", file=sys.stderr)
+            return final_text # Return the text after explicit replacements
         except Exception as e:
             print(f"❌ Post-processing error: {str(e)}", file=sys.stderr)
+            print(f"❓ Error occurred at: {e.__traceback__.tb_lineno}", file=sys.stderr)
             print("⚠️ Returning original transcript instead", file=sys.stderr)
             return transcript
     
@@ -105,22 +162,27 @@ You are a helpful assistant specializing in improving speech-to-text transcripti
 Your task is to improve the transcribed text by:
 1. Fixing any grammatical errors
 2. Adding appropriate punctuation
-3. Correcting obvious word misrecognitions
+3. Correcting obvious word misrecognitions (where possible)
 4. Maintaining the original meaning and intent
 5. Preserving technical terms and proper nouns
 
 Only return the corrected transcript without any explanations or additional text.
 """
         
+        # Specific German word replacements dictionary is now a class attribute (self.german_word_replacements)
+        # We still include instructions in the prompt as a hint for GPT-4
+        # german_word_replacements = { ... } # Removed from here
+
         # Language-specific additions
         if language == "de":
-            return base_prompt + """
-For German text, pay special attention to:
-- Correct use of German grammatical cases
-- Proper noun capitalization
-- Compound word formation
-- Umlauts (ä, ö, ü) and ß
-"""
+            # Construct the specific correction instructions as hints for GPT-4
+            correction_instructions = "\\nAdditionally, try to correct the following common misrecognitions in German technical context (case-insensitive matching):\\n"
+            # Use the class attribute here
+            for wrong, correct in self.german_word_replacements.items(): 
+                # Make case-insensitivity explicit in the instruction to GPT-4
+                correction_instructions += f"- If you see '{wrong}' (case-insensitive), try to correct it to '{correct}'.\\\\n"
+
+            return base_prompt + "\\nFor German text, pay special attention to:\\n- Correct use of German grammatical cases\\n- Proper noun capitalization\\n- Compound word formation\\n- Umlauts (ä, ö, ü) and ß\\n" + correction_instructions
         elif language == "fr":
             return base_prompt + """
 For French text, pay special attention to:
@@ -137,6 +199,65 @@ For Spanish text, pay special attention to:
 """
         
         return base_prompt
+    
+    def _apply_german_word_replacements(self, text):
+        """Apply explicit, case-insensitive word replacements for German text."""
+        if not text:
+            return text
+        
+        print(f"🔍 DEBUG: Starting word replacements on text: '{text}'", file=sys.stderr)
+        corrected_text = text
+        replacement_occurred = False
+        
+        # Use the class attribute for general replacements
+        for wrong, correct in self.german_word_replacements.items():
+            # Escape any regex special characters in the 'wrong' string
+            escaped_wrong = re.escape(wrong)
+            
+            # Create patterns with flexibility
+            patterns_to_try = []
+            
+            # Standard pattern with word boundaries
+            patterns_to_try.append(r'\b' + escaped_wrong + r'\b')
+            
+            # Add plural form if not already ending with 's'
+            if not wrong.endswith('s'):
+                patterns_to_try.append(r'\b' + escaped_wrong + r's\b')
+            
+            # Add flexibility for hyphens if present
+            if '-' in wrong:
+                # Replace hyphen with optional hyphen or space pattern
+                flexible_pattern = escaped_wrong.replace('\\-', '[-\\s]')
+                patterns_to_try.append(r'\b' + flexible_pattern + r'\b')
+                # And plural version if needed
+                if not wrong.endswith('s'):
+                    patterns_to_try.append(r'\b' + flexible_pattern + r's\b')
+            
+            # Try each pattern
+            for pattern in patterns_to_try:
+                try:
+                    # Check if this pattern has any matches
+                    if re.search(pattern, corrected_text, flags=re.IGNORECASE):
+                        # Store before replacement for comparison
+                        before_replacement = corrected_text
+                        
+                        # Apply the replacement
+                        corrected_text = re.sub(pattern, correct, corrected_text, flags=re.IGNORECASE)
+                        
+                        # Debug: show exactly what changed, but only if something actually changed
+                        if before_replacement != corrected_text:
+                            print(f"✓ Replaced: '{wrong}' → '{correct}'", file=sys.stderr)
+                            replacement_occurred = True
+                except re.error as e:
+                    print(f"⚠️ Regex error for pattern '{wrong}': {e}", file=sys.stderr)
+        
+        # Log summary of replacements
+        if replacement_occurred:
+            print(f"✅ Completed word replacements", file=sys.stderr)
+        else:
+            print(f"ℹ️ No word replacements needed", file=sys.stderr)
+            
+        return corrected_text
     
     @staticmethod
     def get_supported_languages():

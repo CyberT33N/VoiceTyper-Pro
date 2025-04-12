@@ -693,9 +693,10 @@ class VoiceTyperApp:
             
         service_type = self.settings.get('service', 'deepgram')
         api_key = self.settings.get('api_key' if service_type == 'deepgram' else 'openai_api_key', '')
+        post_processing = self.settings.get('post_processing', False)
         
         try:
-            self.service = create_service(service_type, api_key)
+            self.service = create_service(service_type, api_key, post_processing)
         except ValueError as ve:
             raise ValueError(f"Invalid {service_type.capitalize()} API Key")
         except Exception as e:
