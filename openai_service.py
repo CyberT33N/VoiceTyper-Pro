@@ -3,6 +3,14 @@ import sys
 import asyncio
 import re # Import re for regex substitutions
 from openai import OpenAI
+from llm_prompts import (
+    STANDARD_BASE_PROMPT, 
+    LLM_OPTIMIZED_BASE_PROMPT,
+    EN_STANDARD_ADDITIONS,
+    EN_LLM_OPTIMIZED_ADDITIONS,
+    DE_STANDARD_ADDITIONS,
+    DE_LLM_OPTIMIZED_ADDITIONS
+)
 
 class OpenAIService:
     """OpenAI implementation of speech-to-text service"""
@@ -181,84 +189,26 @@ class OpenAIService:
     
     def _get_system_prompt_for_language(self, language):
         """Get appropriate system prompt based on language and optimization mode"""
-        # Base prompt that is common for all languages in normal mode
-        base_prompt = """
-You are a helpful assistant specializing in improving speech-to-text transcriptions. 
-Your task is to improve the transcribed text by:
-1. Fixing any grammatical errors
-2. Adding appropriate punctuation
-3. Correcting obvious word misrecognitions (where possible)
-4. Maintaining the original meaning and intent
-5. Preserving technical terms and proper nouns
-
-Only return the corrected transcript without any explanations or additional text.
-"""
-
-        # Base prompt for LLM-optimized mode - enhances text for better LLM consumption
-        llm_optimized_base_prompt = """
-You are a helpful assistant specializing in optimizing text for Large Language Models (LLMs).
-Your task is to improve the transcribed text by:
-1. **Formatting the text in Markdown** while preserving its original content and meaning
-2. Adding appropriate punctuation 
-3. Correcting obvious word misrecognitions (where possible)
-4. **Applying emphasis techniques** like **bold** for key terms and UPPERCASE for important directives
-5. Adding simple Markdown formatting (headers, lists, code blocks) where appropriate
-
-**IMPORTANT RULES:**
-- **MUST**: Preserve the **EXACT** original meaning and intent
-- **MUST**: Keep the core content and structure unchanged
-- **MUST NOT**: Add new information, examples, or explanations not present in the original
-- **MUST NOT**: Transform the text into a step-by-step guide unless it was already structured this way
-- **MUST NOT**: Rewrite the entire structure or flow of the text
-- **MUST**: Apply Markdown formatting ONLY to improve readability for LLMs
-- **MUST**: Format code snippets in appropriate code blocks if they exist
-- **MUST**: Enhance readability by proper use of emphasis and formatting techniques
-- **MUST**: Keep the same paragraph structure as the original text
-
-Only return the improved text with basic formatting applied. Do not add any explanations or additional text.
-"""
-
         # Select the base prompt based on optimization mode
-        selected_base_prompt = llm_optimized_base_prompt if self.llm_optimized else base_prompt
+        selected_base_prompt = LLM_OPTIMIZED_BASE_PROMPT if self.llm_optimized else STANDARD_BASE_PROMPT
         
         # Language-specific additions
         if language == "de":
             # Construct the specific correction instructions for German
-            correction_instructions = "\\nAdditionally, try to correct the following common misrecognitions in German technical context (case-insensitive matching):\\n"
+            correction_instructions = "\nAdditionally, try to correct the following common misrecognitions in German technical context (case-insensitive matching):\n"
             # Use the class attribute here
             for wrong, correct in self.german_word_replacements.items(): 
                 # Make case-insensitivity explicit in the instruction to GPT-4
-                correction_instructions += f"- If you see '{wrong}' (case-insensitive), try to correct it to '{correct}'.\\n"
+                correction_instructions += f"- If you see '{wrong}' (case-insensitive), try to correct it to '{correct}'.\n"
 
-            german_specific = "\\nFor German text, pay special attention to:\\n- Correct use of German grammatical cases\\n- Proper noun capitalization\\n- Compound word formation\\n- Umlauts (ä, ö, ü) and ß\\n"
-            
-            # If LLM-optimized, add additional German-specific LLM optimization instructions
-            if self.llm_optimized:
-                german_specific += "\\nWhen optimizing for LLMs in German:\\n- Use clear paragraph structure\\n- Format technical terms consistently\\n- Use bullet points for lists\\n- Format code examples with appropriate Markdown code blocks\\n- Add headers for different sections using # syntax\\n- Use **bold** for emphasis on key terms\\n- Format command examples as `inline code`\\n"
+            # Wähle die passenden sprachspezifischen Anweisungen
+            german_specific = DE_LLM_OPTIMIZED_ADDITIONS if self.llm_optimized else DE_STANDARD_ADDITIONS
             
             return selected_base_prompt + german_specific + correction_instructions
             
         elif language == "en":
-            # English-specific instructions
-            english_specific = """
-For English text, pay special attention to:
-- Proper capitalization of proper nouns and technical terms
-- Correct usage of articles (a/an/the)
-- Appropriate use of technical jargon
-- Consistency in spelling (US or UK English)
-"""
-
-            # If LLM-optimized, add additional English-specific LLM optimization instructions
-            if self.llm_optimized:
-                english_specific += """
-When optimizing for LLMs in English:
-- Use clear heading hierarchy with # syntax
-- Separate distinct topics into paragraphs
-- Use bullet points or numbered lists for sequential items
-- Format code examples with ```language syntax
-- Use **bold** for emphasis on key terms
-- Format any technical or command examples as `inline code`
-"""
+            # Wähle die passenden sprachspezifischen Anweisungen für Englisch
+            english_specific = EN_LLM_OPTIMIZED_ADDITIONS if self.llm_optimized else EN_STANDARD_ADDITIONS
             
             return selected_base_prompt + english_specific
         
