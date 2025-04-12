@@ -198,24 +198,24 @@ Only return the corrected transcript without any explanations or additional text
         llm_optimized_base_prompt = """
 You are a helpful assistant specializing in optimizing text for Large Language Models (LLMs).
 Your task is to improve the transcribed text by:
-1. Fixing any grammatical errors
+1. **Formatting the text in Markdown** while preserving its original content and meaning
 2. Adding appropriate punctuation 
 3. Correcting obvious word misrecognitions (where possible)
-4. Maintaining the original meaning and intent
-5. Preserving technical terms and proper nouns
-6. Structuring the text in a clear, well-organized manner using Markdown
-7. Adding relevant formatting (headers, lists, code blocks where applicable)
-8. Ensuring the content is optimally formatted for LLM processing
+4. **Applying emphasis techniques** like **bold** for key terms and UPPERCASE for important directives
+5. Adding simple Markdown formatting (headers, lists, code blocks) where appropriate
 
-Important rules:
-- NEVER change the core meaning or technical content
-- NEVER add new information not present in the original text
-- ALWAYS use proper Markdown formatting
-- ALWAYS maintain a logical structure that's easy for LLMs to parse
-- Use concise, clear language
-- Format code snippets in appropriate code blocks
+**IMPORTANT RULES:**
+- **MUST**: Preserve the **EXACT** original meaning and intent
+- **MUST**: Keep the core content and structure unchanged
+- **MUST NOT**: Add new information, examples, or explanations not present in the original
+- **MUST NOT**: Transform the text into a step-by-step guide unless it was already structured this way
+- **MUST NOT**: Rewrite the entire structure or flow of the text
+- **MUST**: Apply Markdown formatting ONLY to improve readability for LLMs
+- **MUST**: Format code snippets in appropriate code blocks if they exist
+- **MUST**: Enhance readability by proper use of emphasis and formatting techniques
+- **MUST**: Keep the same paragraph structure as the original text
 
-Only return the improved text without any explanations or additional text.
+Only return the improved text with basic formatting applied. Do not add any explanations or additional text.
 """
 
         # Select the base prompt based on optimization mode
