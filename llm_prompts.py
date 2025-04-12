@@ -163,4 +163,85 @@ Zusätzlich zu deinen normalen Aufgaben, beachte Folgendes:
    - Füge den Code in entsprechenden Code-Blöcken mit Sprachkennzeichnung ein
 
 5. **Wichtig**: Handele nur bei eindeutigen direkten Anfragen, nicht bei jeder Erwähnung von "LLM"
+"""
+
+# Sprachspezifische Zusätze für Französisch im Standardmodus
+FR_STANDARD_ADDITIONS = """
+For French text, pay special attention to:
+- Correct use of gender and number agreement
+- Proper use of accents (é, è, ê, ç, etc.)
+- Correct placement of adjectives
+- Appropriate use of formal and informal language
+- Correct use of contractions (l', qu', etc.)
+"""
+
+# Sprachspezifische Zusätze für Französisch im LLM-optimierten Modus
+FR_LLM_OPTIMIZED_ADDITIONS = """
+For French text, pay special attention to:
+- Correct use of gender and number agreement
+- Proper use of accents (é, è, ê, ç, etc.)
+- Correct placement of adjectives
+- Appropriate use of formal and informal language
+- Correct use of contractions (l', qu', etc.)
+
+When optimizing for LLMs in French:
+- Use clear heading hierarchy with # syntax
+- Maintain proper punctuation including spaces before certain punctuation marks
+- Format technical terms consistently
+- Use **bold** for emphasis on key terms
+- Format code examples with appropriate Markdown code blocks
+- Use bullet points for lists
+"""
+
+# Sprachspezifische Zusätze für Spanisch im Standardmodus
+ES_STANDARD_ADDITIONS = """
+For Spanish text, pay special attention to:
+- Correct use of gender and number agreement
+- Proper use of accents and ñ
+- Correct verb conjugations
+- Appropriate use of formal (usted) and informal (tú) address
+- Regional variations if identifiable
+"""
+
+# Sprachspezifische Zusätze für Spanisch im LLM-optimierten Modus
+ES_LLM_OPTIMIZED_ADDITIONS = """
+For Spanish text, pay special attention to:
+- Correct use of gender and number agreement
+- Proper use of accents and ñ
+- Correct verb conjugations
+- Appropriate use of formal (usted) and informal (tú) address
+- Regional variations if identifiable
+
+When optimizing for LLMs in Spanish:
+- Use clear heading hierarchy with # syntax
+- Format technical terms consistently
+- Use **bold** for emphasis on key terms
+- Format code examples with appropriate Markdown code blocks
+- Use bullet points for lists
+"""
+
+# Generisches Standardformat für andere Sprachen
+GENERIC_STANDARD_ADDITIONS = """
+For this language, pay special attention to:
+- Proper grammar, spelling, and punctuation
+- Preservation of any language-specific characters
+- Technical terms and proper nouns
+- Formal versus informal language where applicable
+"""
+
+# Generisches LLM-optimiertes Format für andere Sprachen
+GENERIC_LLM_OPTIMIZED_ADDITIONS = """
+For this language, pay special attention to:
+- Proper grammar, spelling, and punctuation
+- Preservation of any language-specific characters
+- Technical terms and proper nouns
+- Formal versus informal language where applicable
+
+When optimizing text for LLMs:
+- Use clear heading hierarchy with # syntax
+- Format technical terms consistently
+- Use **bold** for emphasis on key terms
+- Format code examples with appropriate Markdown code blocks
+- Use bullet points for lists
+- Format command examples as `inline code`
 """ 

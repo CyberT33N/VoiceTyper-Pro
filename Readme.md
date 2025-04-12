@@ -10,6 +10,8 @@ Alternative to Mac Whisper, Voice Access, and other voice typing tools.
 - Real-time speech-to-text transcription
 - Multiple speech recognition services (Deepgram and OpenAI)
 - GPT-4o post-processing for improved transcript quality
+- **NEW: LLM Optimization** for enhanced formatting and readability
+- **NEW: Direct LLM Interaction** with "Hey LLM" commands
 - Multiple language support with easy language selection
 - Automatic text insertion at cursor position
 - Keyboard shortcut support (F2)
@@ -71,6 +73,7 @@ python main.py
   - Switch between Deepgram and OpenAI services
   - Select your preferred language
   - Toggle GPT-4o post-processing (for OpenAI service)
+  - **NEW: Enable LLM Optimization** for Markdown formatting and better structure
   - Test your API key directly from the settings dialog
 - Minimize to system tray for unobtrusive operation
 
@@ -83,7 +86,22 @@ When using the OpenAI service, you can enable GPT-4o post-processing to signific
 - Corrects word misrecognitions
 - Maintains the original meaning and intent
 - Preserves technical terms and proper nouns
-- Language-specific enhancements for German, French, and Spanish
+- Language-specific enhancements for German, French, Spanish and more
+
+### NEW: LLM Optimization
+This new feature enhances the text output specifically for Large Language Models:
+- **Markdown Formatting**: Properly formatted headers, lists, and code blocks
+- **Emphasis**: Important terms are highlighted with **bold** or UPPERCASE
+- **Structure**: Improved paragraph structure and readability
+- **Code Handling**: Properly formatted code blocks with syntax highlighting
+- **Language-Specific Enhancements**: Optimized formatting based on language
+
+### NEW: Direct LLM Interaction
+You can now interact directly with the LLM by using "Hey LLM" commands:
+- Start any sentence with "Hey LLM" to make a direct request
+- The original text will be preserved and enhanced
+- The LLM's response will be appended below a separator line
+- Example: "Hey LLM, can you create a table with the information I just mentioned?"
 
 ### System Tray Integration
 - Application can be minimized to system tray
@@ -109,6 +127,7 @@ When using the OpenAI service, you can enable GPT-4o post-processing to signific
 - Wide language support (15+ languages)
 - Enhanced contextual understanding
 - Optional GPT-4o post-processing
+- **NEW: LLM Optimization** for better formatted output
 
 ## 🗣️ Supported Languages
 
@@ -130,10 +149,23 @@ The application supports many languages including:
 
 You can also use Auto-detect mode to let the service determine the language automatically.
 
-## 💪 Support
-If you find this tool helpful, you can support the development by:
-- Buying me a coffee at https://ko-fi.com/perrypixel
-- UPI to kevinp@apl
+## 💻 Technical Details
+
+### Project Structure
+The application is organized with a clean separation of concerns:
+- `main.py`: The main application with UI and recording logic
+- `speech_to_text.py`: Abstract interface for speech recognition services
+- `deepgram_service.py`: Deepgram API implementation
+- `openai_service.py`: OpenAI Whisper implementation with post-processing
+- **NEW: `llm_prompts.py`**: Contains all prompts used for GPT-4o post-processing
+
+### NEW: LLM Prompts
+The application now uses structured prompts with:
+- Base prompts for standard and LLM-optimized modes
+- Language-specific additions for various languages
+- Step-by-step processing with flag tracking
+- Chain-of-thought approach for better reasoning
+- Special handling for direct LLM interactions
 
 ## 🙏 Contributors
 - https://github.com/perrypixel

@@ -9,7 +9,13 @@ from llm_prompts import (
     EN_STANDARD_ADDITIONS,
     EN_LLM_OPTIMIZED_ADDITIONS,
     DE_STANDARD_ADDITIONS,
-    DE_LLM_OPTIMIZED_ADDITIONS
+    DE_LLM_OPTIMIZED_ADDITIONS,
+    FR_STANDARD_ADDITIONS,
+    FR_LLM_OPTIMIZED_ADDITIONS,
+    ES_STANDARD_ADDITIONS,
+    ES_LLM_OPTIMIZED_ADDITIONS,
+    GENERIC_STANDARD_ADDITIONS,
+    GENERIC_LLM_OPTIMIZED_ADDITIONS
 )
 
 class OpenAIService:
@@ -214,7 +220,7 @@ class OpenAIService:
                 # Make case-insensitivity explicit in the instruction to GPT-4
                 correction_instructions += f"- If you see '{wrong}' (case-insensitive), try to correct it to '{correct}'.\n"
 
-            # Wähle die passenden sprachspezifischen Anweisungen
+            # Wähle die passenden sprachspezifischen Anweisungen für Deutsch
             german_specific = DE_LLM_OPTIMIZED_ADDITIONS if self.llm_optimized else DE_STANDARD_ADDITIONS
             
             return selected_base_prompt + german_specific + correction_instructions
@@ -224,9 +230,24 @@ class OpenAIService:
             english_specific = EN_LLM_OPTIMIZED_ADDITIONS if self.llm_optimized else EN_STANDARD_ADDITIONS
             
             return selected_base_prompt + english_specific
-        
-        # Default to base prompt for any other language (though we're limiting to DE/EN)
-        return selected_base_prompt
+            
+        elif language == "fr":
+            # Wähle die passenden sprachspezifischen Anweisungen für Französisch
+            french_specific = FR_LLM_OPTIMIZED_ADDITIONS if self.llm_optimized else FR_STANDARD_ADDITIONS
+            
+            return selected_base_prompt + french_specific
+            
+        elif language == "es":
+            # Wähle die passenden sprachspezifischen Anweisungen für Spanisch
+            spanish_specific = ES_LLM_OPTIMIZED_ADDITIONS if self.llm_optimized else ES_STANDARD_ADDITIONS
+            
+            return selected_base_prompt + spanish_specific
+            
+        else:
+            # Für alle anderen Sprachen verwenden wir generische Anweisungen
+            generic_specific = GENERIC_LLM_OPTIMIZED_ADDITIONS if self.llm_optimized else GENERIC_STANDARD_ADDITIONS
+            
+            return selected_base_prompt + generic_specific
     
     def _apply_german_word_replacements(self, text):
         """Apply explicit, case-insensitive word replacements for German text."""
@@ -290,9 +311,20 @@ class OpenAIService:
     @staticmethod
     def get_supported_languages():
         """Return a dictionary of supported languages for UI selection"""
-        # Simplified to only include German and English as requested
         return {
             "auto": "Auto-detect (Ignore language parameter)",
             "en": "English",
-            "de": "Deutsch"
+            "de": "Deutsch",
+            "fr": "Français",
+            "es": "Español",
+            "it": "Italiano",
+            "ja": "日本語",
+            "zh": "中文",
+            "ru": "Русский",
+            "pt": "Português",
+            "ko": "한국어",
+            "ar": "العربية",
+            "nl": "Nederlands",
+            "sv": "Svenska",
+            "pl": "Polski"
         } 
