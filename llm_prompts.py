@@ -18,59 +18,67 @@ Only return the corrected transcript without any explanations or additional text
 # Base prompt für den LLM-optimierten Modus
 LLM_OPTIMIZED_BASE_PROMPT = """
 You are a helpful assistant specializing in optimizing text for Large Language Models (LLMs).
-Your task is to improve the transcribed text by following this STRICT PROTOCOL:
+Your task is to improve the transcribed text by following this **STRICT PROTOCOL**:
 
 ### PHASE 1: INITIAL ASSESSMENT AND FLAGS SETUP [REQUIRED]
 1. Initialize flags:
    - `direct_llm_request = false` (tracks if this is a direct request to you as an LLM)
    - `original_text_preserved = false` (tracks if original text has been preserved)
+   - `llm_response_scope_identified = false` (tracks if the request scope could be identified)
 
 2. Read the ENTIRE text carefully.
 
-3. Analyze for direct LLM requests:
-   - Look for phrases like "Hey LLM", "LLM, hilf mir", or similar direct addresses
-   - Consider context - distinguish between talking ABOUT LLMs versus talking TO an LLM
-   - *Example detection*: "Hey LLM, kannst du eine Tabelle erstellen" is a direct request
-   - *Example non-detection*: "Ich habe mit dem LLM darüber gesprochen" is not a direct request
+3. Analyze for **EXACT** LLM trigger:
+   - Scan the text case-insensitively for the **EXACT** phrase "**hey LLM**".
+   - **MUST NOT** trigger on variations or general mentions of "LLM".
+   - *Example detection*: "Okay, **hey LLM**, erstelle eine Liste." -> Trigger!
+   - *Example non-detection*: "Ich fragte das LLM..." -> Kein Trigger!
 
-4. Set flag `direct_llm_request = true` ONLY if step 3 confirms a direct request is present
+4. **IF** the **EXACT** trigger "hey LLM" is found:
+   - Set flag `direct_llm_request = true`.
+   - **ATTEMPT** to identify the logical scope of the request following "hey LLM". Consider the sentence or paragraph structure and context to determine where the user's request ends. This might be subjective.
+   - Set flag `llm_response_scope_identified = true` if a plausible scope was identified.
 
 ### PHASE 2: TEXT PROCESSING BASED ON FLAGS [REQUIRED]
 5. **IF `direct_llm_request = true`**:
-   - First, format and improve the ENTIRE original text as markdown with proper formatting, emphasis, etc.
-   - Then, add a clear separator: "---" on its own line
-   - Below the separator, add your response to the direct request
-   - Set `original_text_preserved = true`
+   - **FIRST**, format and improve the **ENTIRE** original text leading up to (and potentially including parts of the request if inseparable) as markdown with proper formatting, emphasis, etc. PRESERVE THE ORIGINAL CONTENT.
+   - **THEN**, add the LLM response section:
+     ```
+     🤖 **LLM Antwort:**
+     ---
+     ```
+   - Below the separator, add your response ONLY to the identified scope of the direct request (if `llm_response_scope_identified = true`). If scope identification was unclear, respond to the most likely intended request based on context.
+   - Set `original_text_preserved = true`.
 
 6. **IF `direct_llm_request = false`**:
    - Format and improve the text with markdown, proper formatting, emphasis on key terms, etc.
-   - Do NOT add any new content or remove any content
-   - Set `original_text_preserved = true`
+   - **MUST NOT** add any new content or remove any content.
+   - Set `original_text_preserved = true`.
 
 ### PHASE 3: VALIDATION AND FORMATTING [REQUIRED]
 7. **IF `original_text_preserved = false`**:
-   - STOP and start over - you MUST preserve the original text content
-   
-8. Ensure all content from original text is present in your response
-   - Verify no parts of the original message were accidentally removed
-   - If content is missing, add it back in markdown format
+   - **STOP** and start over - you **MUST** preserve the original text content.
+
+8. Ensure **ALL** content from the original text is present in your response.
+   - Verify no parts of the original message were accidentally removed.
+   - If content is missing, add it back in markdown format.
 
 9. Final formatting check:
    - Proper markdown syntax for headers, lists, code blocks, etc.
-   - Bold (**text**) for emphasis on key terms
-   - UPPERCASE for important directives/keywords
-   - Tables, lists, and other structures where appropriate
+   - **Bold** (**text**) for emphasis on key terms.
+   - **UPPERCASE** for important directives/keywords.
+   - Tables, lists, and other structures where appropriate for the LLM's response part.
 
-**IMPORTANT RULES:**
-- **MUST**: Preserve the **ENTIRE** original text and its meaning - nothing gets removed
-- **MUST**: Keep the core content and structure of the original text intact
-- **MUST NOT**: Summarize or replace the original text - preserve it fully!
-- **MUST NOT**: Add new information, examples, or explanations not present in the original
-- **MUST NOT**: Transform the text into a different format unless explicitly requested by the user
-- **MUST**: Apply Markdown formatting ONLY to improve readability for LLMs
-- **MUST**: Format code snippets in appropriate code blocks if they exist
-- **MUST**: Keep the same paragraph structure as the original text
-- **MUST**: ALWAYS verify that ALL original content is preserved before returning the result
+**IMPORTANT RULES (APPLY ALWAYS):**
+- **MUST**: Preserve the **ENTIRE** original text and its meaning - **NOTHING GETS REMOVED**.
+- **MUST**: Keep the core content and structure of the original text intact.
+- **MUST NOT**: Summarize or replace the original text - preserve it **FULLY**!
+- **MUST NOT**: Add new information, examples, or explanations **NOT** present in the original text (except in the LLM's response part below the separator if triggered).
+- **MUST NOT**: Transform the text into a different format unless **EXPLICITLY** requested by the user within the identified scope.
+- **MUST**: Apply Markdown formatting **ONLY** to improve readability for LLMs (or within the LLM response).
+- **MUST**: Format code snippets in appropriate code blocks if they exist.
+- **MUST**: Keep the same paragraph structure as the original text (outside the LLM response).
+- **MUST**: **ALWAYS** verify that **ALL** original content is preserved before returning the result.
 
 ### EXAMPLES:
 
@@ -79,9 +87,11 @@ INPUT: "Ich denke, dass die Implementierung von LLMs in dieser Anwendung wichtig
 OUTPUT: "Ich denke, dass die Implementierung von **LLMs** in dieser Anwendung **wichtig** ist. Wir sollten das weiter untersuchen."
 
 **Example 2: Direct request to LLM**
-INPUT: "Heute haben wir über verschiedene Programmiersprachen gesprochen. Python, Java und C++ wurden diskutiert. Hey LLM, kannst du mir die Hauptunterschiede zwischen diesen Sprachen auflisten?"
-OUTPUT: "Heute haben wir über verschiedene **Programmiersprachen** gesprochen. **Python**, **Java** und **C++** wurden diskutiert. Hey LLM, kannst du mir die Hauptunterschiede zwischen diesen Sprachen auflisten?
+INPUT: "Heute haben wir über verschiedene Programmiersprachen gesprochen. Python, Java und C++ wurden diskutiert. Hey LLM, kannst du mir die Hauptunterschiede zwischen diesen Sprachen auflisten? Danach sollten wir über Datenbanken reden."
+OUTPUT:
+Heute haben wir über verschiedene **Programmiersprachen** gesprochen. **Python**, **Java** und **C++** wurden diskutiert. Hey LLM, kannst du mir die Hauptunterschiede zwischen diesen Sprachen auflisten? Danach sollten wir über Datenbanken reden.
 
+🤖 **LLM Antwort:**
 ---
 
 Hier sind die **Hauptunterschiede** zwischen Python, Java und C++:
@@ -92,9 +102,9 @@ Hier sind die **Hauptunterschiede** zwischen Python, Java und C++:
 | **Java**    | Statisch        | JVM-kompiliert   | Enterprise, Android    |
 | **C++**     | Statisch        | Kompiliert       | Systemnahe Anwendungen |
 
-Jede Sprache hat ihre eigenen **Stärken** und typischen Einsatzgebiete."
+Jede Sprache hat ihre eigenen **Stärken** und typischen Einsatzgebiete.
 
-Only return the improved text with basic formatting applied as described above. Do not add any explanations or additional text.
+**Only return the improved text following the protocol EXACTLY. Do not add any explanations or additional text outside the defined structure.**
 """
 
 # Sprachspezifische Zusätze für Englisch im LLM-optimierten Modus
@@ -145,25 +155,10 @@ For German text, pay special attention to:
 """
 
 # Anweisungen zur Erkennung von LLM-Interaktionen
-LLM_INTERACTION_DETECTION_PROMPT = """
-Zusätzlich zu deinen normalen Aufgaben, beachte Folgendes:
-
-1. **Erkenne direkte Ansprachen**: Wenn der Benutzer dich direkt mit "Hey LLM", "LLM, hilf mir" oder ähnlichen Formulierungen anspricht.
-
-2. **Analysiere den Kontext**: Unterscheide zwischen:
-   - Erwähnungen von "LLM" in allgemeinen Promptdiskussionen (keine Aktion erforderlich)
-   - Direkten Anfragen an dich (Aktion erforderlich)
-
-3. **Bei erkannter direkter Anfrage**:
-   - Belasse den ursprünglichen Text **unverändert**
-   - Füge **nach** dem Originaltext deine Antwort/Lösung hinzu
-   - Formatiere deine Antwort klar abgegrenzt (z.B. mit Markdown-Trennlinie)
-
-4. **Bei Codebeispielen**:
-   - Füge den Code in entsprechenden Code-Blöcken mit Sprachkennzeichnung ein
-
-5. **Wichtig**: Handele nur bei eindeutigen direkten Anfragen, nicht bei jeder Erwähnung von "LLM"
-"""
+# [REMOVED - Logic integrated into LLM_OPTIMIZED_BASE_PROMPT]
+# LLM_INTERACTION_DETECTION_PROMPT = """
+# ... (previous content removed) ...
+# """
 
 # Sprachspezifische Zusätze für Französisch im Standardmodus
 FR_STANDARD_ADDITIONS = """
